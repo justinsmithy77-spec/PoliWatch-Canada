@@ -1,0 +1,2605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PoliWatch Canada Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    @keyframes poliwatch-marquee {
+      0% { transform: translateX(0%); }
+      100% { transform: translateX(-50%); }
+    }
+    .ticker-track {
+      display: flex;
+      width: max-content;
+      animation: poliwatch-marquee 42s linear infinite;
+    }
+    .ticker-track:hover {
+      animation-play-state: paused;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased selection:bg-red-600 selection:text-white">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    // -------------------------------------------------------------------------
+    // 1. DEDICATED 24/7 CANADIAN NEWS BROADCASTS HUB, X LINKS & POLLSTERS
+    // -------------------------------------------------------------------------
+    const LIVE_NEWS_NETWORKS = [
+      {
+        name: 'CBC News Live Hub',
+        desc: 'National + all regional CBC 24/7 channels',
+        url: 'https://www.cbc.ca/player/news/live',
+      },
+      {
+        name: 'CTV News Channel',
+        desc: '24/7 National News & Power Play',
+        url: 'https://www.ctvnews.ca/video/live/',
+      },
+      {
+        name: 'Global News 24/7',
+        desc: 'National & regional live streams',
+        url: 'https://globalnews.ca/pages/watch-global-news-anytime/',
+      },
+      {
+        name: 'CPAC 24/7',
+        desc: 'Federal Parliament & provincial QP',
+        url: 'https://www.cpac.ca/en',
+      },
+    ];
+
+    const CANADIAN_POLLSTERS = [
+      {
+        name: 'Léger',
+        desc: 'National & provincial voting intention & policy trackers',
+        url: 'https://leger360.com/surveys/',
+      },
+      {
+        name: 'Nanos Research',
+        desc: 'Weekly federal ballot tracking & leadership index',
+        url: 'https://nanos.co/',
+      },
+      {
+        name: 'Abacus Data',
+        desc: 'Federal & provincial public opinion & issue polling',
+        url: 'https://abacusdata.ca/',
+      },
+      {
+        name: 'Ipsos Canada',
+        desc: 'Public affairs, election polling & national sentiment',
+        url: 'https://www.ipsos.com/en-ca',
+      },
+      {
+        name: 'Liaison Strategies',
+        desc: 'Frequent federal, provincial & municipal polling',
+        url: 'https://www.liaisonstrategies.ca/',
+      },
+      {
+        name: 'Research Co.',
+        desc: 'Public opinion research across Canada & Western provinces',
+        url: 'https://researchco.ca/',
+      },
+    ];
+
+    const POLL_338_URLS = {
+      FED: 'https://338canada.com/federal.htm',
+      AB: 'https://338canada.com/alberta/',
+      BC: 'https://338canada.com/bc/',
+      ON: 'https://338canada.com/ontario/',
+      QC: 'https://338canada.com/quebec/',
+      SK: 'https://338canada.com/saskatchewan/',
+      MB: 'https://338canada.com/manitoba/',
+      NS: 'https://338canada.com/ns/',
+      NB: 'https://338canada.com/nb/',
+      NL: 'https://338canada.com/nl/',
+      PE: 'https://338canada.com/federal.htm',
+      YT: 'https://338canada.com/federal.htm',
+      NT: 'https://338canada.com/federal.htm',
+      NU: 'https://338canada.com/federal.htm',
+    };
+
+    const X_OUTLETS = [
+      { label: '@CBCNews', url: 'https://x.com/CBCNews' },
+      { label: '@CTVNews', url: 'https://x.com/CTVNews' },
+      { label: '@globalnews', url: 'https://x.com/globalnews' },
+      { label: '@CPAC_TV', url: 'https://x.com/CPAC_TV' },
+    ];
+
+    const PROVINCIAL_X_TAGS = {
+      FED: '#cdnpoli',
+      AB: '#abpoli',
+      BC: '#bcpoli',
+      ON: '#onpoli',
+      QC: '#polqc',
+      SK: '#skpoli',
+      MB: '#mbpoli',
+      NS: '#nspoli',
+      NB: '#nbpoli',
+      NL: '#nlpoli',
+      PE: '#peipoli',
+      YT: '#ytpoli',
+      NT: '#nwtpoli',
+      NU: '#nupoli',
+    };
+
+    // -------------------------------------------------------------------------
+    // 2. POSTAL CODE PREFIX -> PROVINCE/TERRITORY MAPPING (FOR FALLBACK FINDERS)
+    // -------------------------------------------------------------------------
+    const FSA_TO_PROVINCE = {
+      A: ['NL'],
+      B: ['NS'],
+      C: ['PE'],
+      E: ['NB'],
+      G: ['QC'],
+      H: ['QC'],
+      J: ['QC'],
+      K: ['ON'],
+      L: ['ON'],
+      M: ['ON'],
+      N: ['ON'],
+      P: ['ON'],
+      R: ['MB'],
+      S: ['SK'],
+      T: ['AB'],
+      V: ['BC'],
+      X: ['NT', 'NU'],
+      Y: ['YT'],
+    };
+
+    // -------------------------------------------------------------------------
+    // 3. ALL 14 JURISDICTIONS (VERIFIED NOV 2026 STANDINGS & LIVE URLS)
+    // -------------------------------------------------------------------------
+    const JURISDICTIONS = [
+      {
+        code: 'FED',
+        name: 'Federal (House of Commons)',
+        shortName: 'Federal',
+        chamber: 'House of Commons & Senate',
+        repTitle: 'MP',
+        timeZone: 'America/Toronto',
+        tzLabel: 'ET',
+        sittingDays: [1, 2, 3, 4, 5],
+        startHourLocal: 10,
+        endHourLocal: 18.5,
+        qpTimeLocal: '14:15 ET (Mon–Thu) / 11:15 ET (Fri)',
+        broadcastUrl: 'https://parlvu.parl.gc.ca/',
+        senateBroadcastUrl: 'https://sencanada.ca/en/in-the-chamber/watch-live/',
+        rssUrl: 'https://www.cbc.ca/webfeed/rss/rss-politics',
+        calendarUrl: 'https://www.ourcommons.ca/en/sitting-calendar',
+        billsUrl: 'https://www.parl.ca/legisinfo/en/bills',
+        electionsUrl: 'https://www.elections.ca/',
+        mapUrl: 'https://www.elections.ca/content.aspx?section=res&dir=cir/maps2&document=index&lang=e',
+        standingsUrl: 'https://www.ourcommons.ca/members/en/party-standings',
+        finderUrl: 'https://www.ourcommons.ca/members/en',
+        sessionLabel: '45th Parliament, 1st Session',
+        totalSeats: 343,
+        majorityNeeded: 172,
+        governingParty: 'Liberal Majority (173)',
+        provColor: '#DC2626',
+        fedColor: '#DC2626',
+        fedSummary: 'LIB 173 • CPC 137 • BQ 21 • NDP 5 • GP 1 • 6 Vacant',
+        standings: [
+          { party: 'Liberal (LIB)', seats: 173, color: '#DC2626' },
+          { party: 'Conservative (CPC)', seats: 137, color: '#2563EB' },
+          { party: 'Bloc Québécois (BQ)', seats: 21, color: '#0284C7' },
+          { party: 'NDP', seats: 5, color: '#EA580C' },
+          { party: 'Green (GP)', seats: 1, color: '#16A34A' },
+          { party: 'Vacant (Dec 7 By-Elections)', seats: 6, color: '#64748B' },
+        ],
+      },
+      {
+        code: 'AB',
+        name: 'Alberta',
+        shortName: 'Alberta',
+        chamber: 'Legislative Assembly of Alberta',
+        repTitle: 'MLA',
+        timeZone: 'America/Edmonton',
+        tzLabel: 'MT',
+        sittingDays: [1, 2, 3, 4],
+        startHourLocal: 13.5,
+        endHourLocal: 18,
+        qpTimeLocal: '13:50 MT (Mon–Wed) / 10:00 MT (Thu)',
+        broadcastUrl: 'https://www.assembly.ab.ca/assembly-business/watch-the-assembly',
+        rssUrl: 'https://www.cbc.ca/webfeed/rss/rss-canada-calgary',
+        calendarUrl: 'https://www.assembly.ab.ca/',
+        billsUrl: 'https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature',
+        electionsUrl: 'https://www.elections.ab.ca/',
+        mapUrl: 'https://www.elections.ab.ca/resources/maps/',
+        standingsUrl: 'https://www.assembly.ab.ca/members/members-of-the-legislative-assembly',
+        finderUrl: 'https://www.assembly.ab.ca/members/members-of-the-legislative-assembly',
+        sessionLabel: '31st Legislature, 2nd Session',
+        totalSeats: 87,
+        majorityNeeded: 44,
+        governingParty: 'United Conservative (46)',
+        provColor: '#1D4ED8',
+        fedColor: '#2563EB',
+        fedSummary: 'CPC 33 • LIB 3 • NDP 1 (37 Federal Ridings)',
+        standings: [
+          { party: 'United Conservative (UCP)', seats: 46, color: '#1D4ED8' },
+          { party: 'Alberta NDP', seats: 39, color: '#EA580C' },
+          { party: 'Progressive Tory (PTP)', seats: 1, color: '#0EA5E9' },
+          { party: 'Vacant (Lac Ste. Anne–Parkland)', seats: 1, color: '#64748B' },
+        ],
+      },
+      {
+        code: 'BC',
+        name: 'British Columbia',
+        shortName: 'BC',
+        chamber: 'Legislative Assembly of BC',
+        repTitle: 'MLA',
+        timeZone: 'America/Vancouver',
+        tzLabel: 'PT',
+        sittingDays: [1, 2, 3, 4],
+        startHourLocal: 10,
+        endHourLocal: 18.5,
+        qpTimeLocal: '13:30 PT (Mon/Wed) / 10:00 PT (Tue/Thu)',
+        broadcastUrl: 'https://www.leg.bc.ca/parliamentary-business/broadcasts-and-webcasts',
+        rssUrl: 'https://www.cbc.ca/webfeed/rss/rss-canada-britishcolumbia',
+        calendarUrl: 'https://www.leg.bc.ca/parliamentary-business/parliamentary-calendar',
+        billsUrl: 'https://www.leg.bc.ca/',
+        electionsUrl: 'https://elections.bc.ca/',
+        mapUrl: 'https://elections.bc.ca/resources/maps/',
+        standingsUrl: 'https://www.leg.bc.ca/members/mla-by-community',
+        finderUrl: 'https://www.leg.bc.ca/members/mla-by-community',
+        sessionLabel: '44th Parliament (Swearing-In Nov 19–26, 2026)',
+        emptyBillsNote: 'BC’s newly elected 44th Parliament is currently swearing in MLAs and Cabinet (Nov 19–26, 2026). No bills have been tabled in the new session yet.',
+        totalSeats: 93,
+        majorityNeeded: 47,
+        governingParty: 'Conservative Party of BC Majority (64)',
+        provColor: '#1D4ED8',
+        fedColor: '#DC2626',
+        fedSummary: 'LIB 20 • CPC 19 • NDP 3 • GP 1 (43 Federal Ridings)',
+        standings: [
+          { party: 'Conservative Party of BC', seats: 64, color: '#1D4ED8' },
+          { party: 'BC NDP', seats: 27, color: '#EA580C' },
+          { party: 'BC Green Party', seats: 2, color: '#16A34A' },
+        ],
+      },
+      {
+        code: 'ON',
+        name: 'Ontario',
+        shortName: 'Ontario',
+        chamber: 'Legislative Assembly of Ontario',
+        repTitle: 'MPP',
+        timeZone: 'America/Toronto',
+        tzLabel: 'ET',
+        sittingDays: [1, 2, 3, 4],
+        startHourLocal: 9,
+        endHourLocal: 18,
+        qpTimeLocal: '10:15 ET (Mon–Thu)',
+        broadcastUrl: 'https://www.ola.org/en/legislative-business/video',
+        rssUrl: 'https://www.cbc.ca/webfeed/rss/rss-canada-toronto',
+        calendarUrl: 'https://www.ola.org/en/legislative-business/parliamentary-calendars',
+        billsUrl: 'https://www.ola.org/en/legislative-business/bills/current',
+        electionsUrl: 'https://www.elections.on.ca/',
+        mapUrl: 'https://www.elections.on.ca/en/voting-in-ontario/electoral-district-shapefiles.html',
+        standingsUrl: 'https://www.ola.org/en/members/current',
+        finderUrl: 'https://www.ola.org/en/members/current',
+        sessionLabel: '44th Parliament, 1st Session',
+        totalSeats: 124,
+        majorityNeeded: 63,
+        governingParty: 'PC Party of Ontario Majority (79)',
+        provColor: '#1D4ED8',
+        fedColor: '#DC2626',
+        fedSummary: 'LIB 71 • CPC 49 • 2 Vacant (122 Federal Ridings)',
+        standings: [
+          { party: 'Progressive Conservative (PC)', seats: 79, color: '#1D4ED8' },
+          { party: 'Ontario NDP', seats: 27, color: '#EA580C' },
+          { party: 'Ontario Liberal', seats: 14, color: '#DC2626' },
+          { party: 'Green Party of Ontario', seats: 2, color: '#16A34A' },
+          { party: 'Independent / Vacant', seats: 2, color: '#64748B' },
+        ],
+      },
+      {
+        code: 'QC',
+        name: 'Quebec',
+        shortName: 'Quebec',
+        chamber: 'Assemblée nationale du Québec',
+        repTitle: 'MNA',
+        timeZone: 'America/Toronto',
+        tzLabel: 'ET',
+        sittingDays: [2, 3, 4],
+        startHourLocal: 9.75,
+        endHourLocal: 18,
+        qpTimeLocal: '09:45 ET (Tue–Thu)',
+        broadcastUrl: 'https://www.assnat.qc.ca/en/video-audio/en-direct-webdiffusion.html',
+        rssUrl: 'https://www.cbc.ca/webfeed/rss/rss-canada-montreal',
+        calendarUrl: 'https://www.assnat.qc.ca/en/calendrier-detaille.html',
+        billsUrl: 'https://www.assnat.qc.ca/en/travaux-parlementaires/projets-loi/projets-loi-43-1.html',
+        electionsUrl: 'https://www.electionsquebec.qc.ca/en/',
+        mapUrl: 'https://www.electionsquebec.qc.ca/en/maps/',
+        standingsUrl: 'https://www.assnat.qc.ca/en/deputes/index.html',
+        finderUrl: 'https://www.assnat.qc.ca/en/deputes/index.html',
+        sessionLabel: '44e législature (Opens Dec 1, 2026)',
+        emptyBillsNote: 'The opening of Quebec’s newly elected 44th Legislature has been scheduled for December 1, 2026. No bills have been introduced in the new session yet.',
+        totalSeats: 127,
+        majorityNeeded: 64,
+        governingParty: 'Parti Québécois Minority (59)',
+        provColor: '#0284C7',
+        fedColor: '#DC2626',
+        fedSummary: 'LIB 44 • BQ 21 • CPC 10 • 3 Vacant (78 Federal Ridings)',
+        standings: [
+          { party: 'Parti Québécois (PQ)', seats: 59, color: '#0284C7' },
+          { party: 'Quebec Liberal (PLQ)', seats: 40, color: '#DC2626' },
+          { party: 'Conservative Party of Quebec (PCQ)', seats: 19, color: '#1E3A8A' },
+          { party: 'Québec solidaire (QS)', seats: 9, color: '#F97316' },
+        ],
+      },
+      {
+        code: 'SK',
+        name: 'Saskatchewan',
+        shortName: 'Saskatchewan',
+        chamber: 'Legislative Assembly of Saskatchewan',
+        repTitle: 'MLA',
+        timeZone: 'America/Regina',
+        tzLabel: 'CST',
+        sittingDays: [1, 2, 3, 4],
+        startHourLocal: 13.5,
+        endHourLocal: 17,
+        qpTimeLocal: '13:30 CST (Mon–Wed) / 10:00 CST (Thu)',
+        broadcastUrl: 'https://www.legassembly.sk.ca/legislative-business/watch-legislative-proceedings/',
+        rssUrl: 'https://www.cbc.ca/webfeed/rss/rss-canada-saskatchewan',
+        calendarUrl: 'https://www.legassembly.sk.ca/parliamentary-calendar',
+        billsUrl: 'https://www.legassembly.sk.ca/legislative-business/bills/',
+        electionsUrl: 'https://www.elections.sk.ca/',
+        mapUrl: 'https://www.elections.sk.ca/voters/gis-maps/',
+        standingsUrl: 'https://www.legassembly.sk.ca/mlas/',
+        finderUrl: 'https://www.legassembly.sk.ca/mlas/',
+        sessionLabel: '30th Legislature, 3rd Session',
+        totalSeats: 61,
+        majorityNeeded: 31,
+        governingParty: 'Saskatchewan Party Majority (34)',
+        provColor: '#15803D',
+        fedColor: '#2563EB',
+        fedSummary: 'CPC 12 • LIB 1 • 1 Vacant (14 Federal Ridings)',
+        standings: [
+          { party: 'Saskatchewan Party', seats: 34, color: '#15803D' },
+          { party: 'Saskatchewan NDP', seats: 27, color: '#EA580C' },
+        ],
+      },
+      {
+        code: 'MB',
+        name: 'Manitoba',
+        shortName: 'Manitoba',
+        chamber: 'Legislative Assembly of Manitoba',
+        repTitle: 'MLA',
+        timeZone: 'America/Winnipeg',
+        tzLabel: 'CT',
+        sittingDays: [1, 2, 3, 4],
+        startHourLocal: 13.5,
+        endHourLocal: 17,
+        qpTimeLocal: '13:30 CT (Mon–Thu)',
+        broadcastUrl: 'https://www.youtube.com/@legassemblyofmb/streams',
+        rssUrl: 'https://www.cbc.ca/webfeed/rss/rss-canada-manitoba',
+        calendarUrl: 'https://www.gov.mb.ca/legislature/',
+        billsUrl: 'https://web2.gov.mb.ca/bills/sess/index.php',
+        electionsUrl: 'https://www.electionsmanitoba.ca/',
+        mapUrl: 'https://www.electionsmanitoba.ca/en/Resources/Maps',
+        standingsUrl: 'https://www.gov.mb.ca/legislature/members/mla_list_alphabetical.html',
+        finderUrl: 'https://www.gov.mb.ca/legislature/members/mla_list_alphabetical.html',
+        sessionLabel: '43rd Legislature, 4th Session (Opened Nov 17, 2026)',
+        totalSeats: 57,
+        majorityNeeded: 29,
+        governingParty: 'Manitoba NDP Majority (34)',
+        provColor: '#EA580C',
+        fedColor: '#2563EB',
+        fedSummary: 'CPC 7 • LIB 6 • NDP 1 (14 Federal Ridings)',
+        standings: [
+          { party: 'Manitoba NDP', seats: 34, color: '#EA580C' },
+          { party: 'PC Party of Manitoba', seats: 19, color: '#1D4ED8' },
+          { party: 'Manitoba Liberal', seats: 1, color: '#DC2626' },
+          { party: 'Independent / Vacant', seats: 3, color: '#64748B' },
+        ],
+      },
+      {
+        code: 'NS',
+        name: 'Nova Scotia',
+        shortName: 'Nova Scotia',
+        chamber: 'Nova Scotia House of Assembly',
+        repTitle: 'MLA',
+        timeZone: 'America/Halifax',
+        tzLabel: 'AT',
+        sittingDays: [2, 3, 4, 5],
+        startHourLocal: 13,
+        endHourLocal: 17.5,
+        qpTimeLocal: '13:00 AT (Tue–Fri)',
+        broadcastUrl: 'https://nslegislature.ca/about/supporting-offices/legislative-television-and-broadcasting-services',
+        rssUrl: 'https://www.cbc.ca/webfeed/rss/rss-canada-novascotia',
+        calendarUrl: 'https://nslegislature.ca/get-involved/calendar',
+        billsUrl: 'https://nslegislature.ca/legislative-business/bills-statutes/current-bills',
+        electionsUrl: 'https://electionsnovascotia.ca/',
+        mapUrl: 'https://electionsnovascotia.ca/electoral-maps',
+        standingsUrl: 'https://nslegislature.ca/members/profiles',
+        finderUrl: 'https://nslegislature.ca/members/profiles',
+        sessionLabel: '65th Assembly, 1st Session',
+        totalSeats: 56,
+        majorityNeeded: 29,
+        governingParty: 'PC Party of Nova Scotia Majority (43)',
+        provColor: '#1D4ED8',
+        fedColor: '#DC2626',
+        fedSummary: 'LIB 11 (11 Federal Ridings)',
+        standings: [
+          { party: 'Progressive Conservative (PC)', seats: 43, color: '#1D4ED8' },
+          { party: 'Nova Scotia NDP', seats: 9, color: '#EA580C' },
+          { party: 'Nova Scotia Liberal', seats: 3, color: '#DC2626' },
+          { party: 'Independent', seats: 1, color: '#64748B' },
+        ],
+      },
+      {
+        code: 'NB',
+        name: 'New Brunswick',
+        shortName: 'New Brunswick',
+        chamber: 'Legislative Assembly of New Brunswick',
+        repTitle: 'MLA',
+        timeZone: 'America/Moncton',
+        tzLabel: 'AT',
+        sittingDays: [2, 3, 4, 5],
+        startHourLocal: 13,
+        endHourLocal: 18,
+        qpTimeLocal: '13:00 AT (Tue–Fri)',
+        broadcastUrl: 'https://www.legnb.ca/en/webcasts',
+        rssUrl: 'https://www.cbc.ca/webfeed/rss/rss-canada-newbrunswick',
+        calendarUrl: 'https://www.legnb.ca/en/calendar',
+        billsUrl: 'https://www.legnb.ca/en/legislation/bills',
+        electionsUrl: 'https://www.electionsnb.ca/',
+        mapUrl: 'https://www.electionsnb.ca/',
+        standingsUrl: 'https://www.legnb.ca/en/members/current',
+        finderUrl: 'https://www.legnb.ca/en/members/current',
+        sessionLabel: '61st Legislature, 3rd Session',
+        totalSeats: 49,
+        majorityNeeded: 25,
+        governingParty: 'NB Liberal Majority (31)',
+        provColor: '#DC2626',
+        fedColor: '#DC2626',
+        fedSummary: 'LIB 6 • CPC 4 (10 Federal Ridings)',
+        standings: [
+          { party: 'New Brunswick Liberal', seats: 31, color: '#DC2626' },
+          { party: 'Progressive Conservative (PC)', seats: 16, color: '#1D4ED8' },
+          { party: 'Green Party of NB', seats: 2, color: '#16A34A' },
+        ],
+      },
+      {
+        code: 'NL',
+        name: 'Newfoundland & Labrador',
+        shortName: 'NL',
+        chamber: 'House of Assembly of NL',
+        repTitle: 'MHA',
+        timeZone: 'America/St_Johns',
+        tzLabel: 'NT',
+        sittingDays: [1, 2, 3, 4],
+        startHourLocal: 13.5,
+        endHourLocal: 17.5,
+        qpTimeLocal: '14:00 NT (Mon–Thu)',
+        broadcastUrl: 'https://www.assembly.nl.ca/houseBusiness/Webcast/live_video_audio.aspx',
+        rssUrl: 'https://www.cbc.ca/webfeed/rss/rss-canada-newfoundland',
+        calendarUrl: 'https://www.assembly.nl.ca/HouseBusiness/ParliamentaryCalendar.aspx',
+        billsUrl: 'https://www.assembly.nl.ca/HouseBusiness/Bills/',
+        electionsUrl: 'https://www.elections.gov.nl.ca/',
+        mapUrl: 'https://www.elections.gov.nl.ca/resources/maps/',
+        standingsUrl: 'https://www.assembly.nl.ca/Members/members.aspx',
+        finderUrl: 'https://www.assembly.nl.ca/Members/members.aspx',
+        sessionLabel: '51st General Assembly',
+        totalSeats: 40,
+        majorityNeeded: 21,
+        governingParty: 'PC Party of NL (20)',
+        provColor: '#1D4ED8',
+        fedColor: '#DC2626',
+        fedSummary: 'LIB 4 • CPC 3 (7 Federal Ridings)',
+        standings: [
+          { party: 'Progressive Conservative (PC)', seats: 20, color: '#1D4ED8' },
+          { party: 'NL Liberal', seats: 15, color: '#DC2626' },
+          { party: 'NL NDP', seats: 2, color: '#EA580C' },
+          { party: 'Independent / Vacant', seats: 3, color: '#64748B' },
+        ],
+      },
+      {
+        code: 'PE',
+        name: 'Prince Edward Island',
+        shortName: 'PEI',
+        chamber: 'Legislative Assembly of PEI',
+        repTitle: 'MLA',
+        timeZone: 'America/Halifax',
+        tzLabel: 'AT',
+        sittingDays: [2, 3, 4, 5],
+        startHourLocal: 13,
+        endHourLocal: 17,
+        qpTimeLocal: '13:00 AT (Tue–Thu) / 10:00 AT (Fri)',
+        broadcastUrl: 'https://www.assembly.pe.ca/watch-live',
+        rssUrl: 'https://www.cbc.ca/webfeed/rss/rss-canada-pei',
+        calendarUrl: 'https://www.assembly.pe.ca/calendar',
+        billsUrl: 'https://www.assembly.pe.ca/legislative-business/house-records/bills',
+        electionsUrl: 'https://www.electionspei.ca/',
+        mapUrl: 'https://www.electionspei.ca/provincial-elections/district-maps',
+        standingsUrl: 'https://www.assembly.pe.ca/members',
+        finderUrl: 'https://www.assembly.pe.ca/members',
+        sessionLabel: '67th General Assembly, 3rd Session',
+        totalSeats: 27,
+        majorityNeeded: 14,
+        governingParty: 'PC Party of PEI Majority (18)',
+        provColor: '#1D4ED8',
+        fedColor: '#DC2626',
+        fedSummary: 'LIB 4 (4 Federal Ridings)',
+        standings: [
+          { party: 'Progressive Conservative (PC)', seats: 18, color: '#1D4ED8' },
+          { party: 'PEI Liberal', seats: 4, color: '#DC2626' },
+          { party: 'Green Party of PEI', seats: 4, color: '#16A34A' },
+          { party: 'Independent / Vacant', seats: 1, color: '#64748B' },
+        ],
+      },
+      {
+        code: 'YT',
+        name: 'Yukon',
+        shortName: 'Yukon',
+        chamber: 'Yukon Legislative Assembly',
+        repTitle: 'MLA',
+        timeZone: 'America/Whitehorse',
+        tzLabel: 'MST',
+        sittingDays: [1, 2, 3, 4],
+        startHourLocal: 13,
+        endHourLocal: 17.5,
+        qpTimeLocal: '13:00 MST (Mon–Thu)',
+        broadcastUrl: 'https://yukonassembly.ca/house-business/coverage-proceedings',
+        rssUrl: 'https://www.cbc.ca/webfeed/rss/rss-canada-north',
+        calendarUrl: 'https://yukonassembly.ca/house-business/calendar',
+        billsUrl: 'https://yukonassembly.ca/house-business/progress-bills',
+        electionsUrl: 'https://electionsyukon.ca/',
+        mapUrl: 'https://electionsyukon.ca/en/electoral-districts',
+        standingsUrl: 'https://yukonassembly.ca/mlas',
+        finderUrl: 'https://yukonassembly.ca/mlas',
+        sessionLabel: '36th Legislature, 1st Session',
+        totalSeats: 21,
+        majorityNeeded: 11,
+        governingParty: 'Yukon Party Majority (14)',
+        provColor: '#1D4ED8',
+        fedColor: '#DC2626',
+        fedSummary: 'LIB 1 (1 Federal Riding)',
+        standings: [
+          { party: 'Yukon Party', seats: 14, color: '#1D4ED8' },
+          { party: 'Yukon NDP', seats: 6, color: '#EA580C' },
+          { party: 'Yukon Liberal', seats: 1, color: '#DC2626' },
+        ],
+      },
+      {
+        code: 'NT',
+        name: 'Northwest Territories',
+        shortName: 'NWT',
+        chamber: 'Legislative Assembly of the NWT',
+        repTitle: 'MLA',
+        timeZone: 'America/Yellowknife',
+        tzLabel: 'MT',
+        sittingDays: [1, 2, 3, 4, 5],
+        startHourLocal: 13.5,
+        endHourLocal: 18,
+        qpTimeLocal: '13:30 MT (Mon–Fri)',
+        broadcastUrl: 'https://www.ntlegislativeassembly.ca/legislative-business/watch-session',
+        rssUrl: 'https://www.cbc.ca/webfeed/rss/rss-canada-north',
+        calendarUrl: 'https://www.ntlegislativeassembly.ca/file/sessional-calendar',
+        billsUrl: 'https://www.ntlegislativeassembly.ca/documents-proceedings/bills',
+        electionsUrl: 'https://www.electionsnwt.ca/',
+        mapUrl: 'https://www.electionsnwt.ca/',
+        standingsUrl: 'https://www.ntlegislativeassembly.ca/members',
+        finderUrl: 'https://www.ntlegislativeassembly.ca/members',
+        sessionLabel: '20th Assembly, 1st Session',
+        totalSeats: 19,
+        majorityNeeded: 10,
+        governingParty: 'Consensus Government (19 Non-Partisan)',
+        provColor: '#0D9488',
+        fedColor: '#DC2626',
+        fedSummary: 'LIB 1 (1 Federal Riding)',
+        standings: [
+          { party: 'Consensus Independent MLAs', seats: 19, color: '#0D9488' },
+        ],
+      },
+      {
+        code: 'NU',
+        name: 'Nunavut',
+        shortName: 'Nunavut',
+        chamber: 'Legislative Assembly of Nunavut',
+        repTitle: 'MLA',
+        timeZone: 'America/Iqaluit',
+        tzLabel: 'ET',
+        sittingDays: [1, 2, 3, 4, 5],
+        startHourLocal: 13.5,
+        endHourLocal: 17.5,
+        qpTimeLocal: '13:30 ET (Mon–Thu) / 09:00 ET (Fri)',
+        broadcastUrl: 'https://www.assembly.nu.ca/webcasts',
+        rssUrl: 'https://www.cbc.ca/webfeed/rss/rss-canada-north',
+        calendarUrl: 'https://www.assembly.nu.ca/node/11428',
+        billsUrl: 'https://www.assembly.nu.ca/bills-and-legislation',
+        electionsUrl: 'https://www.elections.nu.ca/',
+        mapUrl: 'https://www.elections.nu.ca/',
+        standingsUrl: 'https://www.assembly.nu.ca/members',
+        finderUrl: 'https://www.assembly.nu.ca/members',
+        sessionLabel: '6th Assembly',
+        totalSeats: 22,
+        majorityNeeded: 12,
+        governingParty: 'Consensus Government (22 Non-Partisan)',
+        provColor: '#0D9488',
+        fedColor: '#DC2626',
+        fedSummary: 'LIB 1 (1 Federal Riding)',
+        standings: [
+          { party: 'Consensus Independent MLAs', seats: 22, color: '#0D9488' },
+        ],
+      },
+    ];
+
+    // -------------------------------------------------------------------------
+    // 4. INTERACTIVE CANADA SVG MAP SHAPES (PROVINCES & TERRITORIES)
+    // -------------------------------------------------------------------------
+    const CANADA_MAP_SHAPES = [
+      { code: 'YT', labelX: 118, labelY: 162, path: 'M 75 95 L 152 102 L 172 222 L 104 222 L 75 148 Z' },
+      { code: 'NT', labelX: 228, labelY: 185, path: 'M 152 102 L 298 115 L 308 238 L 172 222 Z' },
+      { code: 'NU', labelX: 392, labelY: 155, path: 'M 298 115 L 435 65 L 510 120 L 478 215 L 415 245 L 308 238 Z' },
+      { code: 'BC', labelX: 145, labelY: 318, path: 'M 104 222 L 192 225 L 200 398 L 122 392 L 92 325 Z' },
+      { code: 'AB', labelX: 230, labelY: 325, path: 'M 192 225 L 266 232 L 266 402 L 200 398 Z' },
+      { code: 'SK', labelX: 302, labelY: 332, path: 'M 266 232 L 336 238 L 336 405 L 266 402 Z' },
+      { code: 'MB', labelX: 374, labelY: 332, path: 'M 336 238 L 412 245 L 412 405 L 336 405 Z' },
+      { code: 'ON', labelX: 472, labelY: 372, path: 'M 412 245 L 490 278 L 548 372 L 520 448 L 456 435 L 412 405 Z' },
+      { code: 'QC', labelX: 590, labelY: 330, path: 'M 490 278 L 575 218 L 672 252 L 664 362 L 622 392 L 548 372 Z' },
+      { code: 'NB', labelX: 660, labelY: 398, path: 'M 632 372 L 685 372 L 685 418 L 638 418 Z' },
+      { code: 'PE', labelX: 702, labelY: 376, path: 'M 690 368 L 716 368 L 716 384 L 690 384 Z' },
+      { code: 'NS', labelX: 714, labelY: 418, path: 'M 692 392 L 742 392 L 732 436 L 690 432 Z' },
+      { code: 'NL', labelX: 722, labelY: 295, path: 'M 642 225 L 725 245 L 758 312 L 712 342 L 672 308 L 672 252 Z' },
+    ];
+
+    // -------------------------------------------------------------------------
+    // 5. REGIONAL FEDERAL RIDING PARTY BREAKDOWN (343 SEATS — VERIFIED NOV 2026)
+    // -------------------------------------------------------------------------
+    const FEDERAL_REGIONAL_MAP = [
+      { region: 'British Columbia', total: 43, LIB: 20, CPC: 19, BQ: 0, NDP: 3, GP: 1, VAC: 0 },
+      { region: 'Alberta', total: 37, LIB: 3, CPC: 33, BQ: 0, NDP: 1, GP: 0, VAC: 0 },
+      { region: 'Saskatchewan', total: 14, LIB: 1, CPC: 12, BQ: 0, NDP: 0, GP: 0, VAC: 1 },
+      { region: 'Manitoba', total: 14, LIB: 6, CPC: 7, BQ: 0, NDP: 1, GP: 0, VAC: 0 },
+      { region: 'Ontario', total: 122, LIB: 71, CPC: 49, BQ: 0, NDP: 0, GP: 0, VAC: 2 },
+      { region: 'Quebec', total: 78, LIB: 44, CPC: 10, BQ: 21, NDP: 0, GP: 0, VAC: 3 },
+      { region: 'New Brunswick', total: 10, LIB: 6, CPC: 4, BQ: 0, NDP: 0, GP: 0, VAC: 0 },
+      { region: 'Nova Scotia', total: 11, LIB: 11, CPC: 0, BQ: 0, NDP: 0, GP: 0, VAC: 0 },
+      { region: 'Prince Edward Island', total: 4, LIB: 4, CPC: 0, BQ: 0, NDP: 0, GP: 0, VAC: 0 },
+      { region: 'Newfoundland & Labrador', total: 7, LIB: 4, CPC: 3, BQ: 0, NDP: 0, GP: 0, VAC: 0 },
+      { region: 'Territories (YT, NT, NU)', total: 3, LIB: 3, CPC: 0, BQ: 0, NDP: 0, GP: 0, VAC: 0 },
+    ];
+
+    const ACTIVE_BYELECTIONS = [
+      {
+        id: 'FED-BY-DEC2026',
+        jurisdiction: 'Federal (6 Ridings)',
+        type: 'Federal By-Elections',
+        date: '2026-12-07',
+        dateLabel: 'Monday, December 7, 2026',
+        status: 'WRIT ISSUED • ADVANCE POLLS NOV 27–30',
+        ridings: [
+          'Brantford–Brant South (ON)',
+          'Scarborough North (ON)',
+          'Laurier–Sainte-Marie (QC)',
+          'Rosemont–La Petite-Patrie (QC)',
+          'Saint-Hyacinthe–Bagot–Acton (QC)',
+          'Yorkton–Melville (SK)',
+        ],
+        url: 'https://www.elections.ca/',
+      },
+      {
+        id: 'AB-BY-2026',
+        jurisdiction: 'Alberta',
+        type: 'Provincial Vacancy / By-Election Pending',
+        date: '2027-04-26',
+        dateLabel: 'On or before April 26, 2027 (6-Month Writ Window)',
+        status: 'VACANT SEAT • WRIT PENDING',
+        ridings: ['Lac Ste. Anne–Parkland (Vacant since Oct 26, 2026)'],
+        url: 'https://www.elections.ab.ca/',
+      },
+    ];
+
+    const GENERAL_ELECTION_CALENDAR = [
+      { jurisdiction: 'Prince Edward Island', date: '2027-10-04', dateLabel: 'October 4, 2027', agencyUrl: 'https://www.electionspei.ca/' },
+      { jurisdiction: 'Manitoba', date: '2027-10-05', dateLabel: 'October 5, 2027', agencyUrl: 'https://www.electionsmanitoba.ca/' },
+      { jurisdiction: 'Northwest Territories', date: '2027-10-05', dateLabel: 'October 5, 2027', agencyUrl: 'https://www.electionsnwt.ca/' },
+      { jurisdiction: 'Alberta', date: '2027-10-18', dateLabel: 'October 18, 2027', agencyUrl: 'https://www.elections.ab.ca/' },
+      { jurisdiction: 'Nova Scotia', date: '2028-07-18', dateLabel: 'July 18, 2028', agencyUrl: 'https://electionsnovascotia.ca/' },
+      { jurisdiction: 'New Brunswick', date: '2028-10-16', dateLabel: 'October 16, 2028', agencyUrl: 'https://www.electionsnb.ca/' },
+      { jurisdiction: 'Saskatchewan', date: '2028-10-30', dateLabel: 'October 30, 2028', agencyUrl: 'https://www.elections.sk.ca/' },
+      { jurisdiction: 'Ontario', date: '2029-06-07', dateLabel: 'June 7, 2029', agencyUrl: 'https://www.elections.on.ca/' },
+      { jurisdiction: 'Federal (Canada — 46th Election)', date: '2029-10-15', dateLabel: 'On or before October 15, 2029', agencyUrl: 'https://www.elections.ca/' },
+      { jurisdiction: 'Newfoundland & Labrador', date: '2029-10-15', dateLabel: 'October 2029', agencyUrl: 'https://www.elections.gov.nl.ca/' },
+      { jurisdiction: 'Yukon', date: '2029-11-03', dateLabel: 'November 2029', agencyUrl: 'https://electionsyukon.ca/' },
+      { jurisdiction: 'Quebec (45th General Election)', date: '2030-10-07', dateLabel: 'October 7, 2030', agencyUrl: 'https://www.electionsquebec.qc.ca/en/' },
+      { jurisdiction: 'British Columbia (45th General Election)', date: '2030-10-19', dateLabel: 'October 19, 2030', agencyUrl: 'https://elections.bc.ca/' },
+    ];
+
+    const USER_TIMEZONES = [
+      { label: 'Mountain Time (Calgary / Edmonton)', value: 'America/Edmonton' },
+      { label: 'Pacific Time (Vancouver)', value: 'America/Vancouver' },
+      { label: 'Central Standard (Regina)', value: 'America/Regina' },
+      { label: 'Central Time (Winnipeg)', value: 'America/Winnipeg' },
+      { label: 'Eastern Time (Ottawa / Toronto)', value: 'America/Toronto' },
+      { label: 'Atlantic Time (Halifax)', value: 'America/Halifax' },
+      { label: 'Newfoundland Time (St. John’s)', value: 'America/St_Johns' },
+    ];
+
+    const READING_STAGES = [
+      { step: 1, label: '1st Reading' },
+      { step: 2, label: '2nd Reading' },
+      { step: 3, label: 'Committee' },
+      { step: 4, label: '3rd Reading' },
+      { step: 5, label: 'Royal Assent' },
+    ];
+
+    // -------------------------------------------------------------------------
+    // 6. VERIFIED ACTIVE BILLS ACROSS CANADA (NOVEMBER 2026)
+    // -------------------------------------------------------------------------
+    const VERIFIED_BILLS = [
+      // FEDERAL (45th Parliament, 1st Session)
+      {
+        id: 'FED-C-42',
+        jurisdiction: 'FED',
+        jurisdictionName: 'Federal (Canada)',
+        number: 'Bill C-42',
+        title: 'Grocery and Housing Affordability Act',
+        sponsor: 'House Government Bill (45th Parliament, 1st Session)',
+        stageStep: 2,
+        stageLabel: '2nd Reading',
+        latestActivity: 'At Second Reading debate in the House of Commons (Nov 20, 2026)',
+        background: 'An Act respecting certain measures related to affordability and housing across Canada.',
+        officialUrl: 'https://www.parl.ca/legisinfo/en/bill/45-1/c-42',
+      },
+      {
+        id: 'FED-C-39',
+        jurisdiction: 'FED',
+        jurisdictionName: 'Federal (Canada)',
+        number: 'Bill C-39',
+        title: 'Building Canada Strong Act',
+        sponsor: 'Hon. Steven MacKinnon (Minister of Transport)',
+        stageStep: 3,
+        stageLabel: 'Committee',
+        latestActivity: 'At consideration in committee in the House of Commons',
+        background: 'An Act respecting certain measures to strengthen the economy, internal trade, and major national infrastructure.',
+        officialUrl: 'https://www.parl.ca/legisinfo/en/bill/45-1/c-39',
+      },
+      {
+        id: 'FED-C-22',
+        jurisdiction: 'FED',
+        jurisdictionName: 'Federal (Canada)',
+        number: 'Bill C-22',
+        title: 'Lawful Access Act, 2026',
+        sponsor: 'Minister of Public Safety',
+        stageStep: 3,
+        stageLabel: 'Committee',
+        latestActivity: 'At consideration in Senate Committee (SECD)',
+        background: 'An Act respecting lawful access and modernizing digital investigation tools for law enforcement.',
+        officialUrl: 'https://www.parl.ca/legisinfo/en/bill/45-1/c-22',
+      },
+      {
+        id: 'FED-S-7',
+        jurisdiction: 'FED',
+        jurisdictionName: 'Federal (Canada)',
+        number: 'Bill S-7',
+        title: 'Cutting Red Tape for All Canadians Act',
+        sponsor: 'Senate Government Bill (45th Parliament, 1st Session)',
+        stageStep: 3,
+        stageLabel: 'Committee',
+        latestActivity: 'Referred to Senate Committee after Second Reading (Nov 18, 2026)',
+        background: 'Modernizes federal regulatory and administrative processes and streamlines small business insolvency procedures.',
+        officialUrl: 'https://www.parl.ca/legisinfo/en/bill/45-1/s-7',
+      },
+
+      // ALBERTA (31st Legislature, 2nd Session — Fall 2026)
+      {
+        id: 'AB-43',
+        jurisdiction: 'AB',
+        jurisdictionName: 'Alberta',
+        number: 'Bill 43',
+        title: 'Transportation (Safe and Sensible Roads) Statutes Amendment Act, 2026',
+        sponsor: 'Government Bill (31st Legislature, 2nd Session)',
+        stageStep: 1,
+        stageLabel: '1st Reading',
+        latestActivity: 'Introduced in the Legislative Assembly of Alberta (Fall 2026)',
+        background: 'Amends provincial transportation statutes regarding road safety, highway rules, and traffic enforcement.',
+        officialUrl: 'https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature',
+      },
+      {
+        id: 'AB-42',
+        jurisdiction: 'AB',
+        jurisdictionName: 'Alberta',
+        number: 'Bill 42',
+        title: 'Energy, Environment and Utilities Statutes Amendment Act, 2026',
+        sponsor: 'Government Bill (31st Legislature, 2nd Session)',
+        stageStep: 2,
+        stageLabel: '2nd Reading',
+        latestActivity: 'At Second Reading debate in the Alberta Legislature',
+        background: 'Updates provincial energy, environmental regulation, and utilities governance frameworks.',
+        officialUrl: 'https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature',
+      },
+      {
+        id: 'AB-39',
+        jurisdiction: 'AB',
+        jurisdictionName: 'Alberta',
+        number: 'Bill 39',
+        title: 'Health Statutes Amendment Act, 2026 (No. 2)',
+        sponsor: 'Government Bill (31st Legislature, 2nd Session)',
+        stageStep: 2,
+        stageLabel: '2nd Reading',
+        latestActivity: 'At Second Reading debate in the Alberta Legislature',
+        background: 'Amends Alberta health statutes to restructure provincial health service delivery and oversight.',
+        officialUrl: 'https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature',
+      },
+      {
+        id: 'AB-38',
+        jurisdiction: 'AB',
+        jurisdictionName: 'Alberta',
+        number: 'Bill 38',
+        title: 'Advanced Education Statutes Amendment Act, 2026',
+        sponsor: 'Government Bill (31st Legislature, 2nd Session)',
+        stageStep: 3,
+        stageLabel: 'Committee',
+        latestActivity: 'In Committee of the Whole in the Alberta Legislature',
+        background: 'Updates post-secondary governance, funding, and institutional accountability frameworks.',
+        officialUrl: 'https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature',
+      },
+      {
+        id: 'AB-36',
+        jurisdiction: 'AB',
+        jurisdictionName: 'Alberta',
+        number: 'Bill 36',
+        title: 'Children and Family Services (Supporting Alberta Families) Statutes Amendment Act, 2026',
+        sponsor: 'Government Bill (31st Legislature, 2nd Session)',
+        stageStep: 3,
+        stageLabel: 'Committee',
+        latestActivity: 'In Committee of the Whole in the Alberta Legislature',
+        background: 'Amends child and family services legislation to update family support and child welfare rules.',
+        officialUrl: 'https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature',
+      },
+      {
+        id: 'AB-35',
+        jurisdiction: 'AB',
+        jurisdictionName: 'Alberta',
+        number: 'Bill 35',
+        title: 'Education and Childcare (Securing Parental Involvement) Statutes Amendment Act, 2026',
+        sponsor: 'Government Bill (31st Legislature, 2nd Session)',
+        stageStep: 3,
+        stageLabel: 'Committee',
+        latestActivity: 'In Committee of the Whole in the Alberta Legislature',
+        background: 'Amends education and childcare statutes regarding parental notification and involvement.',
+        officialUrl: 'https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature',
+      },
+      {
+        id: 'AB-33',
+        jurisdiction: 'AB',
+        jurisdictionName: 'Alberta',
+        number: 'Bill 33',
+        title: 'Justice Statutes Amendment Act, 2026 (No. 2)',
+        sponsor: 'Government Bill (31st Legislature, 2nd Session)',
+        stageStep: 4,
+        stageLabel: '3rd Reading',
+        latestActivity: 'Passed Third Reading — Awaiting Royal Assent',
+        background: 'Amends provincial justice and court administration statutes across Alberta.',
+        officialUrl: 'https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature',
+      },
+
+      // ONTARIO (44th Parliament, 1st Session — Nov 2026)
+      {
+        id: 'ON-154',
+        jurisdiction: 'ON',
+        jurisdictionName: 'Ontario',
+        number: 'Bill 154',
+        title: 'Early Age Onset Cancer Awareness Day Act, 2026',
+        sponsor: 'France Gélinas, MPP (Private Member’s Bill)',
+        stageStep: 1,
+        stageLabel: '1st Reading',
+        latestActivity: 'Passed First Reading, ordered for Second Reading (Nov 19, 2026)',
+        background: 'Proclaims Early Age Onset Cancer Awareness Day across Ontario.',
+        officialUrl: 'https://www.ola.org/en/legislative-business/bills/current',
+      },
+      {
+        id: 'ON-149',
+        jurisdiction: 'ON',
+        jurisdictionName: 'Ontario',
+        number: 'Bill 149',
+        title: 'Toxic Drug Crisis Emergency Response Task Force Act, 2026',
+        sponsor: 'Robin Lennox, MPP (Private Member’s Bill)',
+        stageStep: 1,
+        stageLabel: '1st Reading',
+        latestActivity: 'Passed First Reading, ordered for Second Reading (Nov 16, 2026)',
+        background: 'Establishes a provincial emergency response task force to address the toxic drug crisis.',
+        officialUrl: 'https://www.ola.org/en/legislative-business/bills/current',
+      },
+      {
+        id: 'ON-148',
+        jurisdiction: 'ON',
+        jurisdictionName: 'Ontario',
+        number: 'Bill 148',
+        title: 'Protect Ontario Families and Communities Act, 2026',
+        sponsor: 'Hon. Michael Parsa (Minister of Children, Community and Social Services)',
+        stageStep: 2,
+        stageLabel: '2nd Reading',
+        latestActivity: 'Second Reading debated in the Ontario Legislature (Nov 18, 2026)',
+        background: 'Enacts protections regarding intimate images and amends various family and community safety statutes.',
+        officialUrl: 'https://www.ola.org/en/legislative-business/bills/current',
+      },
+      {
+        id: 'ON-143',
+        jurisdiction: 'ON',
+        jurisdictionName: 'Ontario',
+        number: 'Bill 143',
+        title: 'Plan to Protect Ontario Act (Budget Measures), 2026 (No. 2)',
+        sponsor: 'Hon. Peter Bethlenfalvy (Minister of Finance)',
+        stageStep: 3,
+        stageLabel: 'Committee',
+        latestActivity: 'At Standing Committee on Finance and Economic Affairs (Nov 18, 2026)',
+        background: 'Implements Fall 2026 Ontario fiscal, tax, and economic budget measures.',
+        officialUrl: 'https://www.ola.org/en/legislative-business/bills/current',
+      },
+      {
+        id: 'ON-140',
+        jurisdiction: 'ON',
+        jurisdictionName: 'Ontario',
+        number: 'Bill 140',
+        title: 'Building Ontario Faster Act, 2026',
+        sponsor: 'Hon. Andrea Khanjin (Minister of Red Tape Reduction)',
+        stageStep: 3,
+        stageLabel: 'Committee',
+        latestActivity: 'At Standing Committee on the Interior (Nov 17, 2026)',
+        background: 'Streamlines regulatory approvals and permitting to accelerate infrastructure and housing projects.',
+        officialUrl: 'https://www.ola.org/en/legislative-business/bills/current',
+      },
+
+      // SASKATCHEWAN (30th Legislature, 3rd Session — Nov 2026)
+      {
+        id: 'SK-67',
+        jurisdiction: 'SK',
+        jurisdictionName: 'Saskatchewan',
+        number: 'Bill 67',
+        title: 'The Coroners Amendment Act, 2026',
+        sponsor: 'Government Bill (30th Legislature, 3rd Session)',
+        stageStep: 1,
+        stageLabel: '1st Reading',
+        latestActivity: 'Introduced in the Legislative Assembly of Saskatchewan (Nov 3, 2026)',
+        background: 'Amends Saskatchewan’s Coroners Act to update death investigation and reporting procedures.',
+        officialUrl: 'https://www.legassembly.sk.ca/legislative-business/bills/',
+      },
+      {
+        id: 'SK-66',
+        jurisdiction: 'SK',
+        jurisdictionName: 'Saskatchewan',
+        number: 'Bill 66',
+        title: 'The Pooled Registered Pension Plans (Saskatchewan) Amendment Act, 2026',
+        sponsor: 'Government Bill (30th Legislature, 3rd Session)',
+        stageStep: 1,
+        stageLabel: '1st Reading',
+        latestActivity: 'Introduced in the Legislative Assembly of Saskatchewan (Nov 3, 2026)',
+        background: 'Updates provincial regulations governing pooled registered pension plans.',
+        officialUrl: 'https://www.legassembly.sk.ca/legislative-business/bills/',
+      },
+
+      // MANITOBA (43rd Legislature, 4th Session — Opened Nov 17, 2026)
+      {
+        id: 'MB-2',
+        jurisdiction: 'MB',
+        jurisdictionName: 'Manitoba',
+        number: 'Bill 2',
+        title: 'The Livestock and Livestock Products Amendment Act',
+        sponsor: 'Hon. Ron Kostyshyn (Minister of Agriculture)',
+        stageStep: 1,
+        stageLabel: '1st Reading',
+        latestActivity: 'Introduced in the 4th Session of the 43rd Legislature (Nov 2026)',
+        background: 'Updates Manitoba’s regulatory framework for livestock and agricultural products.',
+        officialUrl: 'https://web2.gov.mb.ca/bills/sess/index.php',
+      },
+      {
+        id: 'MB-3',
+        jurisdiction: 'MB',
+        jurisdictionName: 'Manitoba',
+        number: 'Bill 3',
+        title: 'The Private Investigators and Security Guards Amendment Act',
+        sponsor: 'Hon. Matt Wiebe (Minister of Justice)',
+        stageStep: 1,
+        stageLabel: '1st Reading',
+        latestActivity: 'Introduced in the 4th Session of the 43rd Legislature (Nov 2026)',
+        background: 'Modernizes licensing and oversight standards for private investigators and security guards.',
+        officialUrl: 'https://web2.gov.mb.ca/bills/sess/index.php',
+      },
+      {
+        id: 'MB-4',
+        jurisdiction: 'MB',
+        jurisdictionName: 'Manitoba',
+        number: 'Bill 4',
+        title: 'The Research Manitoba Amendment Act',
+        sponsor: 'Hon. Mike Moroz (Minister of Innovation and New Technology)',
+        stageStep: 1,
+        stageLabel: '1st Reading',
+        latestActivity: 'Introduced in the 4th Session of the 43rd Legislature (Nov 2026)',
+        background: 'Amends the governance and mandate of Research Manitoba to support provincial innovation.',
+        officialUrl: 'https://web2.gov.mb.ca/bills/sess/index.php',
+      },
+
+      // NOVA SCOTIA (65th General Assembly, 1st Session — Fall 2026)
+      {
+        id: 'NS-303',
+        jurisdiction: 'NS',
+        jurisdictionName: 'Nova Scotia',
+        number: 'Bill 303',
+        title: 'Strengthening the Innovation Economy Act',
+        sponsor: 'Krista Gallagher, MLA (Private Member’s Public Bill)',
+        stageStep: 1,
+        stageLabel: '1st Reading',
+        latestActivity: 'First Reading in the Nova Scotia House of Assembly (Sept 17, 2026)',
+        background: 'Establishes a Nova Scotia Intellectual Property Bank as a division of Invest Nova Scotia.',
+        officialUrl: 'https://nslegislature.ca/legc/bills/65th_1st/1st_read/b303.htm',
+      },
+      {
+        id: 'NS-271',
+        jurisdiction: 'NS',
+        jurisdictionName: 'Nova Scotia',
+        number: 'Bill 271',
+        title: 'Improving Access to Women’s Healthcare Act',
+        sponsor: 'Susan Leblanc, MLA (Private Member’s Public Bill)',
+        stageStep: 1,
+        stageLabel: '1st Reading',
+        latestActivity: 'First Reading in the Nova Scotia House of Assembly (Sept 10, 2026)',
+        background: 'Directs the Minister of Health and Wellness to review access barriers for women’s and gender-diverse healthcare.',
+        officialUrl: 'https://nslegislature.ca/legc/bills/65th_1st/1st_read/b271.htm',
+      },
+      {
+        id: 'NS-268',
+        jurisdiction: 'NS',
+        jurisdictionName: 'Nova Scotia',
+        number: 'Bill 268',
+        title: 'Making Women’s Reproductive Healthcare Free Act',
+        sponsor: 'Claudia Chender, MLA (Private Member’s Public Bill)',
+        stageStep: 1,
+        stageLabel: '1st Reading',
+        latestActivity: 'First Reading in the Nova Scotia House of Assembly (Sept 10, 2026)',
+        background: 'Includes birth control and menopausal treatments under MSI and establishes a publicly funded IVF program.',
+        officialUrl: 'https://nslegislature.ca/legc/bills/65th_1st/1st_read/b268.htm',
+      },
+      {
+        id: 'NS-253',
+        jurisdiction: 'NS',
+        jurisdictionName: 'Nova Scotia',
+        number: 'Bill 253',
+        title: 'Service Efficiency Act',
+        sponsor: 'Hon. Timothy Halman (Minister of Service Efficiency)',
+        stageStep: 5,
+        stageLabel: 'Royal Assent',
+        latestActivity: 'Received Royal Assent (Sept 18, 2026 — 2026 Statutes, Ch. 16)',
+        background: 'Government legislation to streamline provincial service delivery and regulatory processes.',
+        officialUrl: 'https://nslegislature.ca/legislative-business/bills-statutes/bills/assembly-65-session-1/bill-253',
+      },
+
+      // NEW BRUNSWICK (61st Legislature, 3rd Session — Nov 2026)
+      {
+        id: 'NB-14',
+        jurisdiction: 'NB',
+        jurisdictionName: 'New Brunswick',
+        number: 'Bill 14',
+        title: 'An Act Respecting Property Tax Reform Measures',
+        sponsor: 'Hon. Aaron Kennedy (Government Bill)',
+        stageStep: 2,
+        stageLabel: '2nd Reading',
+        latestActivity: 'Second Reading passed in New Brunswick Legislature (Nov 2026)',
+        background: 'Implements provincial property tax reform and assessment relief measures.',
+        officialUrl: 'https://www.legnb.ca/en/legislation/bills',
+      },
+      {
+        id: 'NB-12',
+        jurisdiction: 'NB',
+        jurisdictionName: 'New Brunswick',
+        number: 'Bill 12',
+        title: 'An Act Respecting Young Persons, Digital Markets and Technology Use',
+        sponsor: 'Hon. Robert McKee, K.C. (Government Bill)',
+        stageStep: 2,
+        stageLabel: '2nd Reading',
+        latestActivity: 'Second Reading passed in New Brunswick Legislature (Nov 2026)',
+        background: 'Establishes protections for young persons in digital markets and online technology platforms.',
+        officialUrl: 'https://www.legnb.ca/en/legislation/bills',
+      },
+      {
+        id: 'NB-11',
+        jurisdiction: 'NB',
+        jurisdictionName: 'New Brunswick',
+        number: 'Bill 11',
+        title: 'Addiction Treatment Services Licensing Act',
+        sponsor: 'Hon. Robert McKee, K.C. (Government Bill)',
+        stageStep: 2,
+        stageLabel: '2nd Reading',
+        latestActivity: 'Second Reading passed in New Brunswick Legislature (Nov 2026)',
+        background: 'Creates a provincial licensing and oversight framework for addiction treatment services.',
+        officialUrl: 'https://www.legnb.ca/en/legislation/bills',
+      },
+      {
+        id: 'NB-5',
+        jurisdiction: 'NB',
+        jurisdictionName: 'New Brunswick',
+        number: 'Bill 5',
+        title: 'Non-disclosure Agreements Act',
+        sponsor: 'Hon. Robert McKee, K.C. (Government Bill)',
+        stageStep: 4,
+        stageLabel: '3rd Reading',
+        latestActivity: 'Third Reading passed in New Brunswick Legislature (Nov 2026)',
+        background: 'Restricts the misuse of non-disclosure agreements in cases of harassment and discrimination.',
+        officialUrl: 'https://www.legnb.ca/en/legislation/bills',
+      },
+
+      // PRINCE EDWARD ISLAND (67th General Assembly, 3rd Session — Nov 2026)
+      {
+        id: 'PE-41',
+        jurisdiction: 'PE',
+        jurisdictionName: 'Prince Edward Island',
+        number: 'Bill 41',
+        title: 'Government Reorganization Act (No. 2)',
+        sponsor: 'Government Bill (67th General Assembly, 3rd Session)',
+        stageStep: 1,
+        stageLabel: '1st Reading',
+        latestActivity: 'Introduced in the PEI Legislative Assembly (Nov 3, 2026)',
+        background: 'Updates provincial department names and ministerial titles following the September 2026 reorganization of government.',
+        officialUrl: 'https://www.assembly.pe.ca/legislative-business/house-records/bills',
+      },
+      {
+        id: 'PE-4',
+        jurisdiction: 'PE',
+        jurisdictionName: 'Prince Edward Island',
+        number: 'Bill 4',
+        title: 'An Act to Amend the Education Act',
+        sponsor: 'Hon. Robin Croucher (Minister of Education and Early Years)',
+        stageStep: 2,
+        stageLabel: '2nd Reading',
+        latestActivity: 'Active in 3rd Session, 67th General Assembly',
+        background: 'Shortens notification timelines for education authority directors reporting suspensions or terminations of instructional personnel.',
+        officialUrl: 'https://www.assembly.pe.ca/legislative-business/house-records/bills',
+      },
+
+      // NEWFOUNDLAND & LABRADOR (51st General Assembly — Nov 2026)
+      {
+        id: 'NL-CF-2026',
+        jurisdiction: 'NL',
+        jurisdictionName: 'Newfoundland & Labrador',
+        number: 'Civil Forfeiture Bill',
+        title: 'Civil Forfeiture Legislation (Proceeds of Crime)',
+        sponsor: 'Minister of Justice and Public Safety',
+        stageStep: 1,
+        stageLabel: '1st Reading',
+        latestActivity: 'Introduced in the House of Assembly (Nov 3, 2026)',
+        background: 'Allows the province to seize cash and property linked to criminal activity without a criminal conviction.',
+        officialUrl: 'https://www.assembly.nl.ca/HouseBusiness/Bills/',
+      },
+
+      // YUKON (36th Legislature, 1st Session — Nov 2026)
+      {
+        id: 'YT-204',
+        jurisdiction: 'YT',
+        jurisdictionName: 'Yukon',
+        number: 'Bill 204',
+        title: 'Second Appropriation Act 2026-27',
+        sponsor: 'Hon. Currie Dixon (Premier of Yukon)',
+        stageStep: 2,
+        stageLabel: '2nd Reading',
+        latestActivity: 'Active on the Yukon Order Paper (Nov 18, 2026)',
+        background: 'Authorizes supplementary territorial government appropriations for the 2026–27 fiscal year.',
+        officialUrl: 'https://yukonassembly.ca/house-business/progress-bills',
+      },
+
+      // NORTHWEST TERRITORIES (20th Assembly, 1st Session — Nov 2026)
+      {
+        id: 'NT-66',
+        jurisdiction: 'NT',
+        jurisdictionName: 'Northwest Territories',
+        number: 'Bill 66',
+        title: 'An Act to Amend the Motor Vehicles Act No. 2 (Scooters and Seatbelts)',
+        sponsor: '20th Assembly, 1st Session',
+        stageStep: 3,
+        stageLabel: 'Committee',
+        latestActivity: 'Committee Review completed (Nov 6, 2026) — Awaiting Third Reading',
+        background: 'Updates NWT motor vehicle regulations regarding electric scooters and seatbelt requirements.',
+        officialUrl: 'https://www.ntlegislativeassembly.ca/documents-proceedings/bills',
+      },
+      {
+        id: 'NT-63',
+        jurisdiction: 'NT',
+        jurisdictionName: 'Northwest Territories',
+        number: 'Bill 63',
+        title: 'Electoral Boundaries Reform Act',
+        sponsor: '20th Assembly, 1st Session',
+        stageStep: 1,
+        stageLabel: '1st Reading',
+        latestActivity: 'First Reading completed (Nov 4, 2026)',
+        background: 'Reforms the process and criteria for reviewing Northwest Territories electoral district boundaries.',
+        officialUrl: 'https://www.ntlegislativeassembly.ca/documents-proceedings/bills',
+      },
+
+      // NUNAVUT (6th Assembly — Nov 2026)
+      {
+        id: 'NU-6',
+        jurisdiction: 'NU',
+        jurisdictionName: 'Nunavut',
+        number: 'Bill 6',
+        title: 'Archaeological and Palaeontological Sites Act',
+        sponsor: '6th Legislative Assembly of Nunavut',
+        stageStep: 3,
+        stageLabel: 'Committee',
+        latestActivity: 'In Committee review (Fall 2026 Sitting)',
+        background: 'Updates protection, permitting, and management of archaeological and palaeontological sites in Nunavut.',
+        officialUrl: 'https://www.assembly.nu.ca/bills-and-legislation',
+      },
+    ];
+
+    function buildGoogleNewsSearchUrl(query) {
+      return `https://news.google.com/search?q=${encodeURIComponent(query)}&hl=en-CA&gl=CA&ceid=CA:en`;
+    }
+
+    function buildXHashtagUrl(tag) {
+      return `https://x.com/search?q=${encodeURIComponent(tag)}&f=live`;
+    }
+
+    function daysUntil(dateStr, now) {
+      const target = new Date(`${dateStr}T12:00:00`);
+      const diff = Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+      return diff > 0 ? `${diff} days away` : 'Active / Imminent';
+    }
+
+    function getStatus(j, now) {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: j.timeZone,
+        weekday: 'short',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: false,
+      }).formatToParts(now);
+      const map = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+      const day = map[parts.find((p) => p.type === 'weekday')?.value || 'Mon'] ?? 1;
+      const h = parseInt(parts.find((p) => p.type === 'hour')?.value || '12', 10);
+      const m = parseInt(parts.find((p) => p.type === 'minute')?.value || '0', 10);
+      const dec = h + m / 60;
+      const localTime = new Intl.DateTimeFormat('en-CA', {
+        timeZone: j.timeZone,
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      }).format(now);
+
+      const isSittingDay = j.sittingDays.includes(day);
+      const isLive = isSittingDay && dec >= j.startHourLocal && dec <= j.endHourLocal;
+      return {
+        isLive,
+        localTime,
+        label: isLive ? 'LIVE IN SESSION' : isSittingDay ? 'Scheduled Sitting Day' : 'Not Sitting Today',
+      };
+    }
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('monitor');
+      const [selectedJur, setSelectedJur] = useState('ALL');
+      const [search, setSearch] = useState('');
+      const [userTz, setUserTz] = useState('America/Edmonton');
+      const [now, setNow] = useState(() => new Date());
+      const [bills, setBills] = useState(VERIFIED_BILLS);
+      const [newsItems, setNewsItems] = useState([]);
+      const [loadingNews, setLoadingNews] = useState(true);
+      const [activeBill, setActiveBill] = useState(null);
+
+      // Interactive Map State
+      const [mapMode, setMapMode] = useState('prov');
+      const [hoveredProv, setHoveredProv] = useState(null);
+
+      // Postal Code Riding Lookup State
+      const [postalCode, setPostalCode] = useState('');
+      const [repResults, setRepResults] = useState([]);
+      const [lookupMeta, setLookupMeta] = useState(null);
+      const [showMunicipal, setShowMunicipal] = useState(false);
+      const [repLoading, setRepLoading] = useState(false);
+      const [repError, setRepError] = useState('');
+
+      useEffect(() => {
+        const t = setInterval(() => setNow(new Date()), 30000);
+        return () => clearInterval(t);
+      }, []);
+
+      useEffect(() => {
+        fetch('/data/all_bills.json')
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => {
+            if (d && Array.isArray(d.bills) && d.bills.length > 0) setBills(d.bills);
+          })
+          .catch(() => {});
+      }, []);
+
+      useEffect(() => {
+        let cancelled = false;
+        setLoadingNews(true);
+
+        const activeJurObj = JURISDICTIONS.find((j) => j.code === selectedJur);
+        const targetRss = activeJurObj
+          ? activeJurObj.rssUrl
+          : 'https://www.cbc.ca/webfeed/rss/rss-politics';
+
+        fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(targetRss)}`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            if (cancelled) return;
+            if (data && data.status === 'ok' && Array.isArray(data.items)) {
+              setNewsItems(data.items.slice(0, 8));
+            } else {
+              setNewsItems([]);
+            }
+          })
+          .catch(() => {
+            if (!cancelled) setNewsItems([]);
+          })
+          .finally(() => {
+            if (!cancelled) setLoadingNews(false);
+          });
+
+        return () => {
+          cancelled = true;
+        };
+      }, [selectedJur]);
+
+      async function handlePostalLookup(e) {
+        e.preventDefault();
+        const cleaned = postalCode.replace(/\s+/g, '').toUpperCase();
+        if (cleaned.length !== 6) {
+          setRepError('Please enter a valid 6-character Canadian postal code (e.g., V9B 2W7).');
+          return;
+        }
+        setRepLoading(true);
+        setRepError('');
+        setRepResults([]);
+        setLookupMeta(null);
+
+        const provCodes = FSA_TO_PROVINCE[cleaned[0]] || [];
+
+        try {
+          const res = await fetch(`https://represent.opennorth.ca/postcodes/${cleaned}/`);
+          if (!res.ok) throw new Error('Postal code not found');
+          const data = await res.json();
+
+          const centroidReps = data.representatives_centroid || [];
+          const concordanceReps = data.representatives_concordance || [];
+
+          const isFedOrProv = (office) =>
+            ['MP', 'MLA', 'MPP', 'MNA', 'MHA'].includes((office || '').toUpperCase());
+
+          const finalReps = [];
+          const seenRoles = new Set();
+          const seenPeople = new Set();
+
+          for (const r of [...centroidReps, ...concordanceReps]) {
+            const office = (r.elected_office || '').toUpperCase();
+            if (!isFedOrProv(office)) continue;
+            if (seenRoles.has(office) || seenPeople.has(r.name)) continue;
+            seenRoles.add(office);
+            seenPeople.add(r.name);
+            finalReps.push({
+              ...r,
+              isMunicipal: false,
+              level: office === 'MP' ? 'Federal (House of Commons)' : 'Provincial / Territorial',
+            });
+          }
+
+          let hasMayor = false;
+          for (const r of centroidReps) {
+            const office = (r.elected_office || '').trim();
+            if (isFedOrProv(office) || seenPeople.has(r.name)) continue;
+            if (office.toLowerCase() === 'mayor') {
+              if (hasMayor) continue;
+              hasMayor = true;
+            }
+            seenPeople.add(r.name);
+            finalReps.push({
+              ...r,
+              isMunicipal: true,
+              level: r.representative_set_name || 'Municipal Council',
+            });
+          }
+
+          const hasFederalMP = finalReps.some(
+            (r) => (r.elected_office || '').toUpperCase() === 'MP'
+          );
+          const hasProvincialRep = finalReps.some((r) =>
+            ['MLA', 'MPP', 'MNA', 'MHA'].includes((r.elected_office || '').toUpperCase())
+          );
+
+          setRepResults(finalReps);
+          setLookupMeta({
+            postalCode: cleaned,
+            hasFederalMP,
+            hasProvincialRep,
+            provCodes,
+          });
+        } catch (err) {
+          setRepError('Could not retrieve riding info right now. Check the postal code and try again.');
+        } finally {
+          setRepLoading(false);
+        }
+      }
+
+      const visibleReps = useMemo(() => {
+        return showMunicipal ? repResults : repResults.filter((r) => !r.isMunicipal);
+      }, [repResults, showMunicipal]);
+
+      const municipalCount = useMemo(() => {
+        return repResults.filter((r) => r.isMunicipal).length;
+      }, [repResults]);
+
+      const jurisdictionsWithStatus = useMemo(
+        () => JURISDICTIONS.map((j) => ({ ...j, status: getStatus(j, now) })),
+        [now]
+      );
+
+      const filteredBills = useMemo(() => {
+        return bills.filter((b) => {
+          if (selectedJur !== 'ALL' && b.jurisdiction !== selectedJur) return false;
+          if (!search.trim()) return true;
+          const q = search.toLowerCase();
+          return (
+            b.number.toLowerCase().includes(q) ||
+            b.title.toLowerCase().includes(q) ||
+            b.background.toLowerCase().includes(q) ||
+            b.jurisdictionName.toLowerCase().includes(q)
+          );
+        });
+      }, [bills, selectedJur, search]);
+
+      const filteredPortals = useMemo(
+        () => jurisdictionsWithStatus.filter((j) => selectedJur === 'ALL' || j.code === selectedJur),
+        [jurisdictionsWithStatus, selectedJur]
+      );
+
+      const activeJurObj = useMemo(
+        () => JURISDICTIONS.find((j) => j.code === selectedJur) || null,
+        [selectedJur]
+      );
+
+      const inspectedJur = useMemo(() => {
+        const targetCode = hoveredProv || (selectedJur !== 'ALL' ? selectedJur : 'FED');
+        return JURISDICTIONS.find((j) => j.code === targetCode) || JURISDICTIONS[0];
+      }, [hoveredProv, selectedJur]);
+
+      const tickerEntries = useMemo(() => {
+        if (newsItems.length > 0) {
+          return newsItems.map((item) => ({
+            label: item.title,
+            url: item.link,
+            tag: selectedJur === 'ALL' ? 'CBC POLITICS' : `${activeJurObj?.shortName?.toUpperCase() || 'CANADA'} NEWS`,
+          }));
+        }
+        return bills.slice(0, 6).map((b) => ({
+          label: `${b.jurisdictionName} ${b.number}: ${b.title} (${b.stageLabel})`,
+          url: b.officialUrl,
+          tag: 'LEGISLATION',
+        }));
+      }, [newsItems, bills, selectedJur, activeJurObj]);
+
+      const clockText = useMemo(
+        () =>
+          new Intl.DateTimeFormat('en-CA', {
+            timeZone: userTz,
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+          }).format(now),
+        [now, userTz]
+      );
+
+      const activeJurName =
+        selectedJur === 'ALL'
+          ? 'Canadian Politics'
+          : activeJurObj?.shortName || 'Canada';
+
+      const activeProvTag =
+        selectedJur !== 'ALL' && selectedJur !== 'FED' ? PROVINCIAL_X_TAGS[selectedJur] : null;
+
+      const active338Url =
+        selectedJur !== 'ALL' && POLL_338_URLS[selectedJur]
+          ? POLL_338_URLS[selectedJur]
+          : 'https://338canada.com/federal.htm';
+
+      const active338Label =
+        selectedJur !== 'ALL' && ['AB', 'BC', 'ON', 'QC', 'SK', 'MB', 'NS', 'NB', 'NL'].includes(selectedJur)
+          ? `338Canada ${activeJurObj?.shortName} Projections & Polls`
+          : '338Canada Federal Projections & Polls';
+
+      return (
+        <div className="min-h-screen bg-slate-950 text-slate-100">
+          {/* TOP UTILITY BAR */}
+          <div className="bg-slate-900 border-b border-slate-800 px-4 py-2 text-xs">
+            <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-3">
+                <span className="font-semibold text-red-400">POLIWATCH CANADA • 14 JURISDICTIONS</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400">{clockText}</span>
+                <select
+                  value={userTz}
+                  onChange={(e) => setUserTz(e.target.value)}
+                  className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-200"
+                >
+                  {USER_TIMEZONES.map((tz) => (
+                    <option key={tz.value} value={tz.value}>{tz.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* LIVE SCROLLING BREAKING NEWS TICKER */}
+          <div className="bg-slate-950 border-b border-slate-800 overflow-hidden flex items-center">
+            <div className="bg-red-600 text-white text-[11px] font-bold uppercase tracking-wider px-3 py-2 shrink-0 flex items-center gap-1.5 z-10 shadow-md">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              Live Wire
+            </div>
+            <div className="overflow-hidden flex-1 py-2">
+              <div className="ticker-track text-xs text-slate-200">
+                {[...tickerEntries, ...tickerEntries].map((entry, idx) => (
+                  <a
+                    key={idx}
+                    href={entry.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 mx-6 hover:text-blue-300 transition whitespace-nowrap"
+                  >
+                    <span className="text-[10px] font-bold text-red-400 uppercase">{entry.tag}</span>
+                    <span>{entry.label}</span>
+                    <span className="text-slate-600 ml-4">•</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* COMPACT X (TWITTER) LIVE FEEDS QUICK-LAUNCH BAR */}
+          <div className="bg-slate-900/70 border-b border-slate-800/80 px-4 py-1.5 text-[11px]">
+            <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="font-bold text-slate-400 uppercase tracking-wider mr-1">
+                  X Live Feeds:
+                </span>
+                <a
+                  href={buildXHashtagUrl('#cdnpoli')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 font-medium transition"
+                >
+                  #cdnpoli ↗
+                </a>
+                {activeProvTag ? (
+                  <a
+                    href={buildXHashtagUrl(activeProvTag)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2 py-0.5 rounded bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 font-semibold transition"
+                  >
+                    {activeProvTag} ↗
+                  </a>
+                ) : (
+                  <>
+                    <a href={buildXHashtagUrl('#abpoli')} target="_blank" rel="noopener noreferrer" className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">#abpoli</a>
+                    <a href={buildXHashtagUrl('#bcpoli')} target="_blank" rel="noopener noreferrer" className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">#bcpoli</a>
+                    <a href={buildXHashtagUrl('#onpoli')} target="_blank" rel="noopener noreferrer" className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">#onpoli</a>
+                    <a href={buildXHashtagUrl('#polqc')} target="_blank" rel="noopener noreferrer" className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">#polqc</a>
+                  </>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-slate-500 hidden sm:inline">Outlets:</span>
+                {X_OUTLETS.map((outlet) => (
+                  <a
+                    key={outlet.label}
+                    href={outlet.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2 py-0.5 rounded bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"
+                  >
+                    {outlet.label} ↗
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <header className="max-w-7xl mx-auto px-4 pt-6 pb-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-bold text-white">PoliWatch Canada Dashboard</h1>
+                <p className="text-sm text-slate-400 mt-1">
+                  Verified legislature broadcasts, sitting calendars, active bills across Canada, the political arena, and election schedules.
+                </p>
+              </div>
+
+              <nav className="flex items-center gap-1.5 bg-slate-900 p-1.5 rounded-xl border border-slate-800 self-start">
+                <button
+                  onClick={() => setActiveTab('monitor')}
+                  className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition ${
+                    activeTab === 'monitor'
+                      ? 'bg-red-600 text-white shadow-sm'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  Live Monitor & Bills
+                </button>
+                <button
+                  onClick={() => setActiveTab('map')}
+                  className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition ${
+                    activeTab === 'map'
+                      ? 'bg-red-600 text-white shadow-sm'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  Political Arena
+                </button>
+                <button
+                  onClick={() => setActiveTab('elections')}
+                  className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+                    activeTab === 'elections'
+                      ? 'bg-red-600 text-white shadow-sm'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  <span>Elections & By-Elections</span>
+                  <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px]">
+                    Dec 7
+                  </span>
+                </button>
+              </nav>
+            </div>
+
+            <div className="flex gap-1.5 overflow-x-auto mt-4 pb-1">
+              <button
+                onClick={() => setSelectedJur('ALL')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium shrink-0 ${
+                  selectedJur === 'ALL' ? 'bg-red-600 text-white' : 'bg-slate-900 text-slate-300 border border-slate-800'
+                }`}
+              >
+                All Canada ({bills.length})
+              </button>
+              {jurisdictionsWithStatus.map((j) => {
+                const count = bills.filter((b) => b.jurisdiction === j.code).length;
+                return (
+                  <button
+                    key={j.code}
+                    onClick={() => setSelectedJur(j.code)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium shrink-0 ${
+                      selectedJur === j.code ? 'bg-red-600 text-white' : 'bg-slate-900 text-slate-300 border border-slate-800'
+                    }`}
+                  >
+                    {j.shortName}{count > 0 ? ` (${count})` : ''}
+                  </button>
+                );
+              })}
+            </div>
+          </header>
+
+          {/* TAB 1: LIVE MONITOR & BILLS */}
+          {activeTab === 'monitor' && (
+            <main className="max-w-7xl mx-auto px-4 py-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <section className="lg:col-span-7 space-y-5">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search active bills, provinces, or topics..."
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500"
+                />
+
+                {filteredBills.length > 0 ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-sm font-semibold text-white">
+                        Tracked Active Legislation ({filteredBills.length})
+                      </h2>
+                      <span className="text-[11px] text-slate-400">Updated Nov 20, 2026</span>
+                    </div>
+                    {filteredBills.map((bill) => {
+                      const relatedNewsQuery = `"${bill.number}" "${bill.title}" Canada`;
+                      return (
+                        <div
+                          key={bill.id}
+                          onClick={() => setActiveBill(bill)}
+                          className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl p-4 cursor-pointer space-y-2.5"
+                        >
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="px-2 py-0.5 rounded bg-red-600/20 text-red-400 font-semibold">
+                              {bill.jurisdictionName} • {bill.number}
+                            </span>
+                            <span className="text-emerald-400 font-semibold">{bill.stageLabel}</span>
+                          </div>
+                          <h3 className="text-base font-semibold text-white">{bill.title}</h3>
+                          <p className="text-xs text-slate-300 bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                            <strong className="text-amber-400">Official Scope:</strong> {bill.background}
+                          </p>
+
+                          <div className="grid grid-cols-5 gap-1 pt-1">
+                            {READING_STAGES.map((st) => (
+                              <div key={st.step} className="space-y-1">
+                                <div className={`h-1.5 rounded-full ${st.step <= bill.stageStep ? 'bg-emerald-500' : 'bg-slate-800'}`} />
+                                <span className="text-[10px] text-slate-400 block truncate">{st.label}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div
+                            className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <span className="text-slate-400 truncate max-w-[60%]">{bill.latestActivity}</span>
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={buildGoogleNewsSearchUrl(relatedNewsQuery)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-2.5 py-1 rounded-md bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 font-medium"
+                              >
+                                Related News Articles ↗
+                              </a>
+                              <a
+                                href={bill.officialUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium"
+                              >
+                                Bill Text ↗
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="bg-slate-900 border border-amber-500/30 rounded-xl p-5 space-y-2.5">
+                    <div className="text-xs font-bold uppercase tracking-wider text-amber-400">
+                      {activeJurObj ? `${activeJurObj.name} — Session Status` : 'No Matching Bills'}
+                    </div>
+                    <p className="text-sm text-slate-200">
+                      {activeJurObj?.emptyBillsNote || 'No bills match your current search filter.'}
+                    </p>
+                    {activeJurObj && (
+                      <div className="pt-1">
+                        <a
+                          href={activeJurObj.billsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-xs font-semibold text-white"
+                        >
+                          Open Official {activeJurObj.shortName} Bills Portal ↗
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-sm font-semibold text-white">
+                        Public Interest & Political Headlines — {activeJurName}
+                      </h2>
+                      <p className="text-[11px] text-slate-400">
+                        Live public-interest stories and legislative reporting
+                      </p>
+                    </div>
+                    <a
+                      href={buildGoogleNewsSearchUrl(`${activeJurName} legislature OR parliament OR bill`)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-400 hover:text-blue-300 font-medium"
+                    >
+                      More Coverage ↗
+                    </a>
+                  </div>
+
+                  {loadingNews ? (
+                    <p className="text-xs text-slate-400 py-2">Loading latest headlines...</p>
+                  ) : newsItems.length > 0 ? (
+                    <div className="divide-y divide-slate-800/80">
+                      {newsItems.slice(0, 6).map((item, idx) => (
+                        <a
+                          key={idx}
+                          href={item.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block py-2.5 first:pt-1 last:pb-1 group"
+                        >
+                          <div className="text-xs sm:text-sm font-medium text-slate-200 group-hover:text-blue-300 transition leading-snug">
+                            {item.title}
+                          </div>
+                          <div className="text-[11px] text-slate-500 mt-1">
+                            CBC News • {new Date(item.pubDate).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-slate-400 bg-slate-950 p-3 rounded-lg border border-slate-800 flex items-center justify-between">
+                      <span>Browse live {activeJurName} political & legislative news coverage:</span>
+                      <a
+                        href={buildGoogleNewsSearchUrl(`${activeJurName} politics legislation`)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded bg-blue-600/20 text-blue-300 border border-blue-500/30 font-medium shrink-0 ml-2"
+                      >
+                        Open News Feed ↗
+                      </a>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-semibold text-white">
+                      Official Active Bills & Order Papers by Legislature
+                    </h2>
+                    <span className="text-[11px] text-slate-400">Verified Portals</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {filteredPortals.map((j) => (
+                      <div
+                        key={j.code}
+                        className="p-3 rounded-lg bg-slate-950 border border-slate-800 flex flex-col justify-between gap-2"
+                      >
+                        <div>
+                          <div className="text-xs font-semibold text-white">{j.name}</div>
+                          <div className="text-[11px] text-slate-400">{j.sessionLabel}</div>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] pt-1">
+                          <a
+                            href={j.billsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1 rounded bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 font-medium"
+                          >
+                            Official Bills →
+                          </a>
+                          <a
+                            href={buildGoogleNewsSearchUrl(`${j.shortName} legislature bills`)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1 rounded bg-blue-600/15 hover:bg-blue-600/25 text-blue-300 border border-blue-500/30 font-medium"
+                          >
+                            News Coverage ↗
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+
+              <aside className="lg:col-span-5 space-y-4">
+                <div
+                  onClick={() => setActiveTab('elections')}
+                  className="bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/30 rounded-xl p-3.5 cursor-pointer transition flex items-center justify-between gap-3"
+                >
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                      Next Election Alert • Dec 7, 2026
+                    </span>
+                    <p className="text-xs font-semibold text-white mt-0.5">
+                      6 Federal By-Elections Underway + Full Election Calendar
+                    </p>
+                  </div>
+                  <span className="text-xs font-semibold text-amber-300 shrink-0">View →</span>
+                </div>
+
+                <div className="bg-slate-900 border border-blue-500/30 rounded-xl p-4 space-y-3">
+                  <div>
+                    <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                      24/7 Canadian Live News Broadcasts
+                    </h2>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Direct links to Canada’s live national & regional broadcast hubs
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {LIVE_NEWS_NETWORKS.map((net) => (
+                      <a
+                        key={net.name}
+                        href={net.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-blue-500/40 transition block"
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-xs font-semibold text-blue-300">{net.name} ↗</span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{net.desc}</p>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2.5">
+                  <h2 className="text-sm font-semibold text-white">Official Legislature Broadcasts & Schedules</h2>
+                  {filteredPortals.map((j) => {
+                    const isLive = j.status.isLive;
+                    return (
+                      <div key={j.code} className="bg-slate-900 border border-slate-800 rounded-xl p-3.5 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="text-sm font-semibold text-white">{j.name}</h3>
+                            <p className={`text-[11px] ${isLive ? 'text-red-400 font-semibold' : 'text-slate-400'}`}>
+                              {j.status.label} • QP: {j.qpTimeLocal}
+                            </p>
+                          </div>
+                          <span className="text-xs font-mono text-slate-300">{j.status.localTime}</span>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1.5 text-xs pt-1">
+                          <a
+                            href={j.broadcastUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`px-3 py-1.5 rounded-lg font-medium inline-flex items-center gap-1.5 transition ${
+                              isLive
+                                ? 'bg-red-600 hover:bg-red-500 text-white'
+                                : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                            }`}
+                          >
+                            {isLive && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
+                            {j.code === 'FED'
+                              ? isLive
+                                ? 'House Live ↗'
+                                : 'House Broadcast ↗'
+                              : isLive
+                              ? 'Legislature Live ↗'
+                              : 'Legislature Broadcast ↗'}
+                          </a>
+                          {j.senateBroadcastUrl && (
+                            <a
+                              href={j.senateBroadcastUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`px-2.5 py-1.5 rounded-lg font-medium inline-flex items-center gap-1.5 transition ${
+                                isLive
+                                  ? 'bg-red-600/85 hover:bg-red-500 text-white'
+                                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                              }`}
+                            >
+                              {isLive ? 'Senate Live ↗' : 'Senate Broadcast ↗'}
+                            </a>
+                          )}
+                          <a href={j.calendarUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800">
+                            Schedule ↗
+                          </a>
+                          <a href={j.billsUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800">
+                            Bills ↗
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </aside>
+            </main>
+          )}
+
+          {/* TAB 2: POLITICAL ARENA */}
+          {activeTab === 'map' && (
+            <main className="max-w-7xl mx-auto px-4 py-4 space-y-6">
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-base font-bold text-white">Find Your Riding, Party & Representatives</h2>
+                    <p className="text-xs text-slate-400">
+                      Enter any Canadian postal code to look up your Federal MP and Provincial MLA/MPP
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <form onSubmit={handlePostalLookup} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={postalCode}
+                        onChange={(e) => setPostalCode(e.target.value)}
+                        placeholder="e.g., V9B 2W7"
+                        maxLength={7}
+                        className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white uppercase w-36"
+                      />
+                      <button
+                        type="submit"
+                        disabled={repLoading}
+                        className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-xs font-semibold text-white"
+                      >
+                        {repLoading ? 'Searching...' : 'Lookup Riding'}
+                      </button>
+                    </form>
+                    <label className="inline-flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={showMunicipal}
+                        onChange={(e) => setShowMunicipal(e.target.checked)}
+                        className="rounded bg-slate-950 border-slate-700 text-red-600 focus:ring-red-500"
+                      />
+                      <span>
+                        Include Municipal{municipalCount > 0 ? ` (${municipalCount})` : ''}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                {repError && <p className="text-xs text-red-400">{repError}</p>}
+
+                {(visibleReps.length > 0 || lookupMeta) && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
+                    {visibleReps.map((rep, i) => (
+                      <div
+                        key={i}
+                        className={`bg-slate-950 border rounded-lg p-3.5 space-y-1 ${
+                          rep.isMunicipal ? 'border-slate-800/80' : 'border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">
+                            {rep.elected_office} • {rep.district_name}
+                          </span>
+                        </div>
+                        <div className="text-sm font-bold text-white">{rep.name}</div>
+                        <div className="text-[11px] text-slate-400">{rep.level}</div>
+                        <div className="text-xs text-slate-300">
+                          Party: {rep.party_name || 'Independent / Non-Partisan'}
+                        </div>
+                        {rep.email && (
+                          <div className="text-[11px] text-slate-400 truncate">{rep.email}</div>
+                        )}
+                      </div>
+                    ))}
+
+                    {lookupMeta && !lookupMeta.hasFederalMP && (
+                      <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3.5 flex flex-col justify-between gap-2">
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                            Federal MP • Official Verification
+                          </span>
+                          <p className="text-xs text-slate-200 mt-1">
+                            Federal MP data for <strong>{lookupMeta.postalCode}</strong> is currently updating in the civic API.
+                          </p>
+                        </div>
+                        <a
+                          href="https://www.ourcommons.ca/members/en"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block text-center px-3 py-1.5 rounded bg-red-600 hover:bg-red-500 text-xs font-semibold text-white"
+                        >
+                          Find Your MP on ourcommons.ca ↗
+                        </a>
+                      </div>
+                    )}
+
+                    {lookupMeta && !lookupMeta.hasProvincialRep && lookupMeta.provCodes.map((pCode) => {
+                      const jur = JURISDICTIONS.find((j) => j.code === pCode);
+                      if (!jur) return null;
+                      return (
+                        <div
+                          key={pCode}
+                          className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3.5 flex flex-col justify-between gap-2"
+                        >
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                              {jur.shortName} {jur.repTitle} • Official Finder
+                            </span>
+                            <p className="text-xs text-slate-200 mt-1">
+                              {jur.shortName} {jur.repTitle} data for <strong>{lookupMeta.postalCode}</strong> is still syncing after recent legislative updates.
+                            </p>
+                          </div>
+                          <a
+                            href={jur.finderUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block text-center px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white"
+                          >
+                            Find Your {jur.shortName} {jur.repTitle} Directly ↗
+                          </a>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* INTERACTIVE MAP OF CANADA */}
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-base font-bold text-white">
+                      Political Arena — Interactive Map of Canada
+                    </h2>
+                    <p className="text-xs text-slate-400">
+                      Click any province or territory to filter seat standings & polling below, or toggle between Provincial Governments and Federal Riding Majorities
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-lg border border-slate-800 self-start">
+                    <button
+                      onClick={() => setMapMode('prov')}
+                      className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+                        mapMode === 'prov'
+                          ? 'bg-red-600 text-white'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Provincial Governments
+                    </button>
+                    <button
+                      onClick={() => setMapMode('fed')}
+                      className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+                        mapMode === 'fed'
+                          ? 'bg-red-600 text-white'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Federal Riding Majority
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                  <div className="lg:col-span-8 bg-slate-950 border border-slate-800 rounded-xl p-3">
+                    <svg
+                      viewBox="55 50 720 420"
+                      className="w-full h-auto max-h-[370px] select-none"
+                      role="img"
+                      aria-label="Interactive Political Map of Canada"
+                    >
+                      {CANADA_MAP_SHAPES.map((shape) => {
+                        const jur = JURISDICTIONS.find((j) => j.code === shape.code);
+                        if (!jur) return null;
+                        const fill = mapMode === 'prov' ? jur.provColor : jur.fedColor;
+                        const isSelected = selectedJur === shape.code;
+                        const isHovered = hoveredProv === shape.code;
+                        return (
+                          <g
+                            key={shape.code}
+                            onClick={() =>
+                              setSelectedJur((prev) => (prev === shape.code ? 'ALL' : shape.code))
+                            }
+                            onMouseEnter={() => setHoveredProv(shape.code)}
+                            onMouseLeave={() => setHoveredProv(null)}
+                            className="cursor-pointer transition-opacity"
+                          >
+                            <path
+                              d={shape.path}
+                              fill={fill}
+                              fillOpacity={isSelected || isHovered ? 1 : 0.78}
+                              stroke={isSelected ? '#FFFFFF' : '#0F172A'}
+                              strokeWidth={isSelected ? 3 : 2}
+                              className="transition-all duration-150"
+                            />
+                            <text
+                              x={shape.labelX}
+                              y={shape.labelY}
+                              textAnchor="middle"
+                              dominantBaseline="middle"
+                              fill="#FFFFFF"
+                              fontSize={shape.code === 'PE' ? '10' : '12'}
+                              fontWeight="700"
+                              className="pointer-events-none"
+                              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.85)' }}
+                            >
+                              {shape.code}
+                            </text>
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  </div>
+
+                  <div className="lg:col-span-4 bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">
+                        {hoveredProv ? 'Inspecting Region' : selectedJur !== 'ALL' ? 'Selected Region' : 'National Overview'}
+                      </span>
+                      {selectedJur !== 'ALL' && (
+                        <button
+                          onClick={() => setSelectedJur('ALL')}
+                          className="text-[11px] text-blue-400 hover:text-blue-300 font-medium"
+                        >
+                          Reset to All Canada
+                        </button>
+                      )}
+                    </div>
+
+                    <div>
+                      <h3 className="text-lg font-bold text-white">{inspectedJur.name}</h3>
+                      <p className="text-xs text-slate-400">{inspectedJur.sessionLabel}</p>
+                    </div>
+
+                    <div className="space-y-2 text-xs pt-1">
+                      <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+                        <div className="text-[10px] uppercase text-slate-400 font-semibold">
+                          {inspectedJur.code === 'FED' ? 'Federal Government' : 'Provincial / Territorial Government'}
+                        </div>
+                        <div className="text-sm font-bold text-white mt-0.5">{inspectedJur.governingParty}</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          {inspectedJur.totalSeats} Total Seats ({inspectedJur.majorityNeeded} for Majority)
+                        </div>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+                        <div className="text-[10px] uppercase text-slate-400 font-semibold">
+                          Federal House of Commons Split
+                        </div>
+                        <div className="text-xs text-slate-200 font-medium mt-0.5">{inspectedJur.fedSummary}</div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <a
+                        href={inspectedJur.mapUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 text-center px-3 py-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-xs font-semibold"
+                      >
+                        Official District Map ↗
+                      </a>
+                      <a
+                        href={inspectedJur.standingsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 text-center px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
+                      >
+                        {inspectedJur.repTitle} Directory ↗
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* POLLING & PUBLIC OPINION HUB */}
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                  <div>
+                    <h2 className="text-base font-bold text-white">
+                      Polling & Public Opinion Trackers
+                    </h2>
+                    <p className="text-xs text-slate-400">
+                      Live electoral projections, leader approval ratings, and major Canadian polling releases
+                    </p>
+                  </div>
+                  <a
+                    href="https://338canada.com/polls.htm"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-400 hover:text-blue-300 font-medium shrink-0"
+                  >
+                    All Latest Federal Polls ↗
+                  </a>
+                </div>
+
+                {/* FEATURED AGGREGATORS & APPROVAL TRACKERS */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <a
+                    href={active338Url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-4 rounded-xl bg-slate-950 hover:bg-slate-800/80 border border-red-500/30 hover:border-red-500/60 transition flex flex-col justify-between gap-2"
+                  >
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">
+                        Seat Projections & Averages
+                      </span>
+                      <div className="text-sm font-bold text-white mt-1">{active338Label} ↗</div>
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        Statistical seat projections, popular vote averages, and riding-by-riding odds.
+                      </p>
+                    </div>
+                  </a>
+
+                  <a
+                    href="https://angusreid.org/leader-approval-tracking-premiers/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-4 rounded-xl bg-slate-950 hover:bg-slate-800/80 border border-slate-800 hover:border-blue-500/40 transition flex flex-col justify-between gap-2"
+                  >
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400">
+                        Provincial Leadership
+                      </span>
+                      <div className="text-sm font-bold text-white mt-1">Angus Reid Premier Approval Tracker ↗</div>
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        Quarterly performance ratings for Canada’s provincial premiers across the country.
+                      </p>
+                    </div>
+                  </a>
+
+                  <a
+                    href="https://angusreid.org/carney-marker/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-4 rounded-xl bg-slate-950 hover:bg-slate-800/80 border border-slate-800 hover:border-blue-500/40 transition flex flex-col justify-between gap-2"
+                  >
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                        Federal Leadership
+                      </span>
+                      <div className="text-sm font-bold text-white mt-1">Prime Minister Approval Tracker ↗</div>
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        Ongoing public approval tracking for the Prime Minister and historical benchmarks.
+                      </p>
+                    </div>
+                  </a>
+                </div>
+
+                {/* MAJOR CANADIAN POLLSTERS */}
+                <div className="space-y-2 pt-1">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    Major Canadian Polling Firms
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                    {CANADIAN_POLLSTERS.map((pollster) => (
+                      <a
+                        key={pollster.name}
+                        href={pollster.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-3 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 transition block"
+                      >
+                        <div className="text-xs font-bold text-slate-100">{pollster.name} ↗</div>
+                        <p className="text-[11px] text-slate-400 mt-0.5">{pollster.desc}</p>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* HOUSE OF COMMONS 343 SEATS */}
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h2 className="text-base font-bold text-white">
+                      House of Commons — 343 Federal Seats by Region
+                    </h2>
+                    <p className="text-xs text-slate-400">
+                      Each block represents 1 federal electoral district (LIB 173, CPC 137, BQ 21, NDP 5, GP 1, Vacant 6)
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-xs">
+                    <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-red-600" />Liberal (173)</span>
+                    <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-blue-600" />Conservative (137)</span>
+                    <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-sky-600" />Bloc (21)</span>
+                    <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-orange-600" />NDP (5)</span>
+                    <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-green-600" />Green (1)</span>
+                    <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-slate-500" />Vacant (6)</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {FEDERAL_REGIONAL_MAP.map((reg) => {
+                    const tiles = [
+                      ...Array(reg.LIB).fill('#DC2626'),
+                      ...Array(reg.CPC).fill('#2563EB'),
+                      ...Array(reg.BQ).fill('#0284C7'),
+                      ...Array(reg.NDP).fill('#EA580C'),
+                      ...Array(reg.GP).fill('#16A34A'),
+                      ...Array(reg.VAC).fill('#64748B'),
+                    ];
+                    return (
+                      <div key={reg.region} className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-2.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-semibold text-white">{reg.region}</span>
+                          <span className="text-slate-400">{reg.total} Ridings</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {tiles.map((hex, idx) => (
+                            <span
+                              key={idx}
+                              style={{ backgroundColor: hex }}
+                              className="w-3.5 h-3.5 rounded-[3px] inline-block"
+                              title={`${reg.region} Riding #${idx + 1}`}
+                            />
+                          ))}
+                        </div>
+                        <div className="text-[11px] text-slate-400 flex flex-wrap gap-2 pt-1">
+                          {reg.LIB > 0 && <span>LIB: {reg.LIB}</span>}
+                          {reg.CPC > 0 && <span>CPC: {reg.CPC}</span>}
+                          {reg.BQ > 0 && <span>BQ: {reg.BQ}</span>}
+                          {reg.NDP > 0 && <span>NDP: {reg.NDP}</span>}
+                          {reg.GP > 0 && <span>GP: {reg.GP}</span>}
+                          {reg.VAC > 0 && <span className="text-amber-400">Vacant: {reg.VAC}</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h2 className="text-base font-bold text-white">
+                  All 14 Chambers — Current Seat Standings & District Maps (Nov 2026)
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredPortals.map((j) => (
+                    <div key={j.code} className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="text-sm font-bold text-white">{j.name}</h3>
+                          <p className="text-xs text-slate-400">
+                            {j.governingParty} • {j.totalSeats} Total Seats ({j.majorityNeeded} for Majority)
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <a
+                            href={j.mapUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2 py-1 rounded bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-[11px] font-medium"
+                          >
+                            District Map ↗
+                          </a>
+                          <a
+                            href={j.standingsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-red-400 hover:text-red-300 font-medium"
+                          >
+                            {j.repTitle} List ↗
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="h-3 w-full rounded-full overflow-hidden flex bg-slate-800">
+                        {j.standings.map((s) => (
+                          <div
+                            key={s.party}
+                            style={{
+                              width: `${(s.seats / j.totalSeats) * 100}%`,
+                              backgroundColor: s.color,
+                            }}
+                            title={`${s.party}: ${s.seats} seats`}
+                          />
+                        ))}
+                      </div>
+
+                      <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
+                        {j.standings.map((s) => (
+                          <div key={s.party} className="flex items-center gap-1.5">
+                            <span
+                              style={{ backgroundColor: s.color }}
+                              className="w-2.5 h-2.5 rounded-full inline-block"
+                            />
+                            <span className="text-slate-300">{s.party}:</span>
+                            <span className="font-bold text-white">{s.seats}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </main>
+          )}
+
+          {/* TAB 3: ELECTIONS & BY-ELECTIONS CALENDAR */}
+          {activeTab === 'elections' && (
+            <main className="max-w-7xl mx-auto px-4 py-4 space-y-6">
+              <div className="space-y-3">
+                <h2 className="text-base font-bold text-white">
+                  Active By-Elections & Vacant Seats Across Canada
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {ACTIVE_BYELECTIONS.map((by) => (
+                    <div
+                      key={by.id}
+                      className="bg-slate-900 border border-amber-500/40 rounded-xl p-5 space-y-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                          {by.status}
+                        </span>
+                        <span className="text-xs font-semibold text-emerald-400">
+                          {daysUntil(by.date, now)}
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-white">
+                          {by.jurisdiction} — {by.type}
+                        </h3>
+                        <p className="text-xs text-slate-300 mt-0.5">Election Date: {by.dateLabel}</p>
+                      </div>
+                      <div className="bg-slate-950 border border-slate-800 rounded-lg p-3 space-y-1">
+                        <div className="text-[11px] font-semibold text-slate-400 uppercase">
+                          Ridings Contested / Vacant:
+                        </div>
+                        <ul className="text-xs text-slate-200 space-y-1 list-disc list-inside">
+                          {by.ridings.map((r) => (
+                            <li key={r}>{r}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="pt-1">
+                        <a
+                          href={by.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-xs font-semibold text-white"
+                        >
+                          Official Elections Agency & Voter Info ↗
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+                <div>
+                  <h2 className="text-base font-bold text-white">
+                    Fixed-Date General Election Schedule (2027 – 2030)
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Statutory scheduled election dates across Federal, Provincial, and Territorial jurisdictions
+                  </p>
+                </div>
+
+                <div className="divide-y divide-slate-800">
+                  {GENERAL_ELECTION_CALENDAR.map((el) => (
+                    <div
+                      key={el.jurisdiction}
+                      className="py-3 flex flex-wrap items-center justify-between gap-2 text-xs"
+                    >
+                      <div>
+                        <span className="font-bold text-white text-sm">{el.jurisdiction}</span>
+                        <span className="text-slate-400 block sm:inline sm:ml-3">
+                          Scheduled: <strong className="text-slate-200">{el.dateLabel}</strong>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="px-2.5 py-1 rounded bg-slate-950 border border-slate-800 text-slate-300 font-mono">
+                          {daysUntil(el.date, now)}
+                        </span>
+                        <a
+                          href={el.agencyUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 font-medium"
+                        >
+                          Elections Portal ↗
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </main>
+          )}
+
+          {/* BILL DETAIL MODAL */}
+          {activeBill && (
+            <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4" onClick={() => setActiveBill(null)}>
+              <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-3" onClick={(e) => e.stopPropagation()}>
+                <p className="text-xs font-bold text-red-400">{activeBill.jurisdictionName} • {activeBill.number}</p>
+                <h3 className="text-lg font-bold text-white">{activeBill.title}</h3>
+                <p className="text-xs text-slate-400">Sponsor: {activeBill.sponsor}</p>
+                <p className="text-sm text-slate-200 bg-slate-950 p-3 rounded-xl border border-slate-800">{activeBill.background}</p>
+                <p className="text-xs text-slate-300">Latest status: {activeBill.latestActivity} ({activeBill.stageLabel})</p>
+                <div className="flex flex-wrap justify-end gap-2 pt-2">
+                  <button onClick={() => setActiveBill(null)} className="px-3.5 py-2 rounded-lg bg-slate-800 text-xs">Close</button>
+                  <a
+                    href={buildGoogleNewsSearchUrl(`"${activeBill.number}" "${activeBill.title}" Canada`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white"
+                  >
+                    Find Related News ↗
+                  </a>
+                  <a href={activeBill.officialUrl} target="_blank" rel="noopener noreferrer" className="px-3.5 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-xs font-semibold text-white">
+                    Official Bill Page ↗
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
