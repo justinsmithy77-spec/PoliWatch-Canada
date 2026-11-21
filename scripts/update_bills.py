@@ -2,26 +2,29 @@ import json
 import os
 import re
 from datetime import datetime, timezone
+from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-HEADERS = {"User-Agent": "PoliWatchCanada/1.0 (https://poliwatch-canada.netlify.app)"}
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (compatible; PoliMonitorCanada/2.0; +https://polimonitor.ca)"
+}
 OUTPUT_PATH = "data/all_bills.json"
 
-# Baseline fallback bills so no province ever goes blank if a government site is under maintenance
+# Baseline fallback bills so no jurisdiction ever goes blank if a government site is down
 FALLBACK_BILLS = [
     {
-        "id": "FED-C-42",
+        "id": "FED-C-39",
         "jurisdiction": "FED",
         "jurisdictionName": "Federal (Canada)",
-        "number": "Bill C-42",
-        "title": "Grocery and Housing Affordability Act",
+        "number": "Bill C-39",
+        "title": "Building Canada Strong Act",
         "sponsor": "House Government Bill (45th Parliament, 1st Session)",
-        "stageStep": 2,
-        "stageLabel": "2nd Reading",
-        "latestActivity": "At Second Reading debate in the House of Commons",
-        "background": "An Act respecting certain measures related to affordability and housing across Canada.",
-        "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-42",
+        "stageStep": 3,
+        "stageLabel": "Committee",
+        "latestActivity": "At Committee in the House of Commons",
+        "background": "An Act respecting measures to strengthen Canada's economy and infrastructure.",
+        "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-39",
     },
     {
         "id": "AB-43",
@@ -37,30 +40,30 @@ FALLBACK_BILLS = [
         "officialUrl": "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature",
     },
     {
-        "id": "AB-42",
-        "jurisdiction": "AB",
-        "jurisdictionName": "Alberta",
-        "number": "Bill 42",
-        "title": "Energy, Environment and Utilities Statutes Amendment Act, 2026",
-        "sponsor": "Government Bill (31st Legislature, 2nd Session)",
-        "stageStep": 2,
-        "stageLabel": "2nd Reading",
-        "latestActivity": "At Second Reading debate in the Alberta Legislature",
-        "background": "Updates provincial energy, environmental regulation, and utilities governance frameworks.",
-        "officialUrl": "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature",
+        "id": "BC-1",
+        "jurisdiction": "BC",
+        "jurisdictionName": "British Columbia",
+        "number": "Bill 1",
+        "title": "An Act to Ensure the Supremacy of Parliament",
+        "sponsor": "Legislative Assembly of British Columbia",
+        "stageStep": 1,
+        "stageLabel": "1st Reading",
+        "latestActivity": "Introduced in the Legislative Assembly of British Columbia",
+        "background": "Active legislation before the Legislative Assembly of British Columbia.",
+        "officialUrl": "https://www.leg.bc.ca/parliamentary-business/bills",
     },
     {
-        "id": "AB-39",
-        "jurisdiction": "AB",
-        "jurisdictionName": "Alberta",
-        "number": "Bill 39",
-        "title": "Health Statutes Amendment Act, 2026 (No. 2)",
-        "sponsor": "Government Bill (31st Legislature, 2nd Session)",
-        "stageStep": 2,
-        "stageLabel": "2nd Reading",
-        "latestActivity": "At Second Reading debate in the Alberta Legislature",
-        "background": "Amends Alberta health statutes to restructure provincial health service delivery and oversight.",
-        "officialUrl": "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature",
+        "id": "QC-1",
+        "jurisdiction": "QC",
+        "jurisdictionName": "Quebec",
+        "number": "Bill 1",
+        "title": "National Assembly of Quebec Current Legislation",
+        "sponsor": "National Assembly of Quebec",
+        "stageStep": 1,
+        "stageLabel": "1st Reading",
+        "latestActivity": "Active in the National Assembly of Quebec",
+        "background": "Active legislation before the National Assembly of Quebec.",
+        "officialUrl": "https://www.assnat.qc.ca/en/travaux-parlementaires/projets-loi/projets-loi-43-1.html",
     },
     {
         "id": "ON-148",
@@ -73,19 +76,6 @@ FALLBACK_BILLS = [
         "stageLabel": "2nd Reading",
         "latestActivity": "Second Reading debated in the Ontario Legislature",
         "background": "Enacts protections regarding intimate images and amends family and community safety statutes.",
-        "officialUrl": "https://www.ola.org/en/legislative-business/bills/current",
-    },
-    {
-        "id": "ON-143",
-        "jurisdiction": "ON",
-        "jurisdictionName": "Ontario",
-        "number": "Bill 143",
-        "title": "Plan to Protect Ontario Act (Budget Measures), 2026 (No. 2)",
-        "sponsor": "Minister of Finance",
-        "stageStep": 3,
-        "stageLabel": "Committee",
-        "latestActivity": "At Standing Committee on Finance and Economic Affairs",
-        "background": "Implements Fall 2026 Ontario fiscal, tax, and economic budget measures.",
         "officialUrl": "https://www.ola.org/en/legislative-business/bills/current",
     },
     {
@@ -110,7 +100,7 @@ FALLBACK_BILLS = [
         "sponsor": "Minister of Agriculture",
         "stageStep": 1,
         "stageLabel": "1st Reading",
-        "latestActivity": "Introduced in the 4th Session of the 43rd Legislature",
+        "latestActivity": "Introduced in the Legislative Assembly of Manitoba",
         "background": "Updates Manitoba's regulatory framework for livestock and agricultural products.",
         "officialUrl": "https://web2.gov.mb.ca/bills/sess/index.php",
     },
@@ -133,7 +123,7 @@ FALLBACK_BILLS = [
         "jurisdictionName": "New Brunswick",
         "number": "Bill 14",
         "title": "An Act Respecting Property Tax Reform Measures",
-        "sponsor": "Government Bill (61st Legislature, 3rd Session)",
+        "sponsor": "Government Bill",
         "stageStep": 2,
         "stageLabel": "2nd Reading",
         "latestActivity": "Second Reading passed in New Brunswick Legislature",
@@ -146,7 +136,7 @@ FALLBACK_BILLS = [
         "jurisdictionName": "Prince Edward Island",
         "number": "Bill 41",
         "title": "Government Reorganization Act (No. 2)",
-        "sponsor": "Government Bill (67th General Assembly, 3rd Session)",
+        "sponsor": "Government Bill",
         "stageStep": 1,
         "stageLabel": "1st Reading",
         "latestActivity": "Introduced in the PEI Legislative Assembly",
@@ -210,9 +200,9 @@ FALLBACK_BILLS = [
 
 def map_stage(status_text):
     text = (status_text or "").lower()
-    if "royal assent" in text or "assented" in text:
+    if "royal assent" in text or "assented" in text or "enacted" in text or "law" in text:
         return 5, "Royal Assent"
-    if "third reading" in text or "3rd reading" in text:
+    if "third reading" in text or "3rd reading" in text or "passed" in text:
         return 4, "3rd Reading"
     if "committee" in text or "report stage" in text:
         return 3, "Committee"
@@ -222,22 +212,23 @@ def map_stage(status_text):
 
 
 def fetch_federal_bills():
-    """Fetch live active bills directly from Parliament of Canada LEGISinfo JSON."""
+    """Fetch ALL live active bills from Parliament of Canada LEGISinfo JSON (no cap)."""
     url = "https://www.parl.ca/legisinfo/en/bills/json"
-    res = requests.get(url, headers=HEADERS, timeout=25)
+    res = requests.get(url, headers=HEADERS, timeout=30)
     res.raise_for_status()
     raw = res.json()
     if not isinstance(raw, list):
         return []
 
-    # Sort by latest activity date descending so newest active bills come first
     raw.sort(key=lambda x: str(x.get("LatestActivityDateTime") or ""), reverse=True)
 
     bills = []
-    for item in raw[:12]:
+    seen = set()
+    for item in raw:
         num = item.get("NumberCode")
-        if not num:
+        if not num or num in seen:
             continue
+        seen.add(num)
         parl = item.get("ParliamentNumber", 45)
         sess = item.get("SessionNumber", 1)
         title = item.get("ShortTitle") or item.get("LongTitle") or f"Federal Bill {num}"
@@ -264,46 +255,73 @@ def fetch_federal_bills():
     return bills
 
 
-def fetch_ontario_bills():
-    """Fetch live current bills from the Legislative Assembly of Ontario."""
-    url = "https://www.ola.org/en/legislative-business/bills/current"
+def scrape_html_table_bills(url, jur_code, jur_name, default_sponsor):
+    """Generic resilient HTML table scraper for provincial/territorial bill tables."""
     res = requests.get(url, headers=HEADERS, timeout=25)
     res.raise_for_status()
     soup = BeautifulSoup(res.text, "html.parser")
     bills = []
     seen = set()
 
-    for row in soup.select("table tbody tr"):
+    for row in soup.select("table tr"):
         cols = [c.get_text(" ", strip=True) for c in row.find_all("td")]
+        if len(cols) < 2:
+            continue
+
+        # Identify bill number column (usually col 0, sometimes col 1)
+        num_raw = cols[0]
+        title_raw = cols[1]
+        if not re.search(r"\d+", num_raw) and len(cols) >= 3 and re.search(r"\d+", cols[1]):
+            num_raw = cols[1]
+            title_raw = cols[2]
+
+        num_match = re.search(r"(?:Bill\s*)?([A-Za-z]?-?\d+[A-Za-z]?)", num_raw, re.I)
+        if not num_match or len(title_raw) < 4:
+            continue
+
+        clean_num = num_match.group(1).upper()
+        bill_id = f"{jur_code}-{re.sub(r'[^A-Za-z0-9-]', '', clean_num)}"
+        if bill_id in seen:
+            continue
+        seen.add(bill_id)
+
         link_el = row.find("a", href=True)
-        if len(cols) < 2 or not link_el:
-            continue
-        num_text = cols[0]
-        title_text = cols[1]
-        status_text = cols[-1] if len(cols) >= 3 else "Active in Ontario Legislature"
-        if not re.search(r"\d+", num_text) or num_text in seen:
-            continue
-        seen.add(num_text)
-        href = link_el["href"]
-        full_url = href if href.startswith("http") else f"https://www.ola.org{href}"
-        step, label = map_stage(status_text)
+        full_url = urljoin(url, link_el["href"]) if link_el else url
+        status_text = cols[-1] if len(cols) >= 3 and cols[-1] != title_raw else f"Active in {jur_name} Legislature"
+        step, label = map_stage(" ".join(cols))
 
         bills.append({
-            "id": f"ON-{re.sub(r'[^A-Za-z0-9]', '', num_text)}",
-            "jurisdiction": "ON",
-            "jurisdictionName": "Ontario",
-            "number": f"Bill {num_text}" if not num_text.lower().startswith("bill") else num_text,
-            "title": title_text,
-            "sponsor": "Legislative Assembly of Ontario",
+            "id": bill_id,
+            "jurisdiction": jur_code,
+            "jurisdictionName": jur_name,
+            "number": f"Bill {clean_num}",
+            "title": title_raw.strip(),
+            "sponsor": default_sponsor,
             "stageStep": step,
             "stageLabel": label,
-            "latestActivity": status_text,
-            "background": f"Active legislation before the Legislative Assembly of Ontario: {title_text}.",
+            "latestActivity": status_text[:180],
+            "background": f"Active legislation before the {default_sponsor}: {title_raw.strip()}.",
             "officialUrl": full_url,
         })
-        if len(bills) >= 8:
-            break
+
     return bills
+
+
+PROVINCIAL_SOURCES = [
+    ("ON", "Ontario", "https://www.ola.org/en/legislative-business/bills/current", "Legislative Assembly of Ontario"),
+    ("AB", "Alberta", "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature", "Legislative Assembly of Alberta"),
+    ("BC", "British Columbia", "https://www.leg.bc.ca/parliamentary-business/bills", "Legislative Assembly of British Columbia"),
+    ("QC", "Quebec", "https://www.assnat.qc.ca/en/travaux-parlementaires/projets-loi/projets-loi-43-1.html", "National Assembly of Quebec"),
+    ("SK", "Saskatchewan", "https://www.legassembly.sk.ca/legislative-business/bills/", "Legislative Assembly of Saskatchewan"),
+    ("MB", "Manitoba", "https://web2.gov.mb.ca/bills/sess/index.php", "Legislative Assembly of Manitoba"),
+    ("NS", "Nova Scotia", "https://nslegislature.ca/legislative-business/bills-statutes/current-bills", "Nova Scotia House of Assembly"),
+    ("NB", "New Brunswick", "https://www.legnb.ca/en/legislation/bills", "Legislative Assembly of New Brunswick"),
+    ("PE", "Prince Edward Island", "https://www.assembly.pe.ca/legislative-business/house-records/bills", "Legislative Assembly of PEI"),
+    ("NL", "Newfoundland & Labrador", "https://www.assembly.nl.ca/HouseBusiness/Bills/", "House of Assembly of NL"),
+    ("YT", "Yukon", "https://yukonassembly.ca/house-business/progress-bills", "Yukon Legislative Assembly"),
+    ("NT", "Northwest Territories", "https://www.ntlegislativeassembly.ca/documents-proceedings/bills", "Legislative Assembly of the NWT"),
+    ("NU", "Nunavut", "https://www.assembly.nu.ca/bills-and-legislation", "Legislative Assembly of Nunavut"),
+]
 
 
 def main():
@@ -323,34 +341,30 @@ def main():
 
     final_bills = []
 
-    # 1. Federal (Live Official JSON)
+    # 1. Federal (Live Official JSON — ALL active bills)
     try:
         fed_live = fetch_federal_bills()
         if fed_live:
-            print(f"Fetched {len(fed_live)} live Federal bills.")
+            print(f"[FED] Fetched {len(fed_live)} live Federal bills.")
             final_bills.extend(fed_live)
         else:
             raise ValueError("Empty federal response")
     except Exception as e:
-        print(f"Federal live fetch skipped ({e}); using saved bills.")
+        print(f"[FED] Live fetch skipped ({e}); using saved/fallback bills.")
         final_bills.extend(existing_by_jur.get("FED") or fallback_by_jur.get("FED", []))
 
-    # 2. Ontario (Live Official HTML)
-    try:
-        on_live = fetch_ontario_bills()
-        if on_live:
-            print(f"Fetched {len(on_live)} live Ontario bills.")
-            final_bills.extend(on_live)
-        else:
-            raise ValueError("Empty Ontario response")
-    except Exception as e:
-        print(f"Ontario live fetch skipped ({e}); using saved bills.")
-        final_bills.extend(existing_by_jur.get("ON") or fallback_by_jur.get("ON", []))
-
-    # 3. Remaining Provinces & Territories (Preserved safely)
-    for code in ["AB", "BC", "QC", "SK", "MB", "NS", "NB", "NL", "PE", "YT", "NT", "NU"]:
-        saved = existing_by_jur.get(code) or fallback_by_jur.get(code, [])
-        final_bills.extend(saved)
+    # 2. All 13 Provinces & Territories (Live HTML table scrapers with safe fallbacks)
+    for code, name, url, sponsor in PROVINCIAL_SOURCES:
+        try:
+            live = scrape_html_table_bills(url, code, name, sponsor)
+            if live:
+                print(f"[{code}] Fetched {len(live)} live bills.")
+                final_bills.extend(live)
+            else:
+                raise ValueError("No bill rows matched")
+        except Exception as e:
+            print(f"[{code}] Live fetch skipped ({e}); using saved/fallback bills.")
+            final_bills.extend(existing_by_jur.get(code) or fallback_by_jur.get(code, []))
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     payload = {
