@@ -30,6 +30,7 @@ SECTOR_RULES = [
         "mental", "addiction", "cancer", "patient", "doctor", "nurse", "clinic",
         "reproductive", "ivf", "dental", "tobacco", "vaping", "smoking", "coroner",
         "termination of life", "long-term care", "care home", "ambulance", "opioid",
+        "nursing home", "community care",
     ]),
     ("Education & Childcare", [
         "education", "school", "university", "université", "college", "student", "teacher",
@@ -48,12 +49,13 @@ SECTOR_RULES = [
         "security guard", "investigator", "firearm", "weapon", "victim", "offence",
         "enforcement", "border", "cyber", "fraud", "violence", "harassment",
         "intimate image", "non-disclosure", "whistleblower", "legal profession",
+        "safer communities",
     ]),
     ("Housing & Municipal", [
         "housing", "municipal", "property tax", "property assessment", "rent", "tenant",
-        "landlord", "zoning", "real estate", "condominium", "mortgage", "homeless",
-        "city", "town", "local government", "urban", "rural", "land use", "assessment",
-        "building code", "construction", "affordability",
+        "landlord", "residential tenancies", "zoning", "real estate", "condominium",
+        "mortgage", "homeless", "city", "town", "local government", "urban", "rural",
+        "land use", "assessment", "building code", "construction", "affordability",
     ]),
     ("Transportation & Infrastructure", [
         "transport", "highway", "road", "traffic", "motor vehicle", "driver",
@@ -75,7 +77,7 @@ SECTOR_RULES = [
         "supply", "revenue", "agriculture", "livestock", "farm", "fisheries",
         "tourism", "traveller", "whisky", "liquor", "cannabis", "digital market",
         "technology", "research", "industry", "industries", "professions", "gaming",
-        "salvage",
+        "salvage", "election", "electoral boundaries",
     ]),
 ]
 
@@ -89,7 +91,7 @@ def classify_sector(title, background="", sponsor=""):
     return "Governance & General"
 
 
-# Baseline fallbacks so no jurisdiction ever breaks if a government site is down
+# Baseline fallbacks so no jurisdiction ever breaks if a government site blocks datacenter IPs
 FALLBACK_BILLS = [
     {
         "id": "FED-C-39",
@@ -183,19 +185,6 @@ FALLBACK_BILLS = [
         "officialUrl": "https://nslegislature.ca/legislative-business/bills-statutes/current-bills",
     },
     {
-        "id": "PE-41",
-        "jurisdiction": "PE",
-        "jurisdictionName": "Prince Edward Island",
-        "number": "Bill 41",
-        "title": "Government Reorganization Act (No. 2)",
-        "sponsor": "Government Bill",
-        "stageStep": 1,
-        "stageLabel": "1st Reading",
-        "latestActivity": "Introduced in the PEI Legislative Assembly",
-        "background": "Updates provincial department names and ministerial titles following government reorganization.",
-        "officialUrl": "https://www.assembly.pe.ca/legislative-business/house-records/bills",
-    },
-    {
         "id": "NL-1",
         "jurisdiction": "NL",
         "jurisdictionName": "Newfoundland & Labrador",
@@ -207,32 +196,6 @@ FALLBACK_BILLS = [
         "latestActivity": "Active in the House of Assembly",
         "background": "Active legislation before the Newfoundland & Labrador House of Assembly.",
         "officialUrl": "https://www.assembly.nl.ca/HouseBusiness/Bills/ga51session1/",
-    },
-    {
-        "id": "YT-204",
-        "jurisdiction": "YT",
-        "jurisdictionName": "Yukon",
-        "number": "Bill 204",
-        "title": "Second Appropriation Act 2026-27",
-        "sponsor": "Premier of Yukon",
-        "stageStep": 2,
-        "stageLabel": "2nd Reading",
-        "latestActivity": "Active on the Yukon Order Paper",
-        "background": "Authorizes supplementary territorial government appropriations for the 2026-27 fiscal year.",
-        "officialUrl": "https://yukonassembly.ca/house-business/progress-bills",
-    },
-    {
-        "id": "NT-66",
-        "jurisdiction": "NT",
-        "jurisdictionName": "Northwest Territories",
-        "number": "Bill 66",
-        "title": "An Act to Amend the Motor Vehicles Act No. 2",
-        "sponsor": "20th Assembly, 1st Session",
-        "stageStep": 3,
-        "stageLabel": "Committee",
-        "latestActivity": "Committee Review completed — Awaiting Third Reading",
-        "background": "Updates NWT motor vehicle regulations regarding electric scooters and seatbelt requirements.",
-        "officialUrl": "https://www.ntlegislativeassembly.ca/documents-proceedings/bills",
     },
     {
         "id": "NU-6",
@@ -249,7 +212,105 @@ FALLBACK_BILLS = [
     },
 ]
 
-# Full New Brunswick 61st Legislature, 3rd Session fallback (14 bills)
+# Yukon 36th Legislature, 1st Session (2026 Spring & Fall Sittings — 18 bills)
+YUKON_36_1_BILLS = [
+    ("1", "Act to Perpetuate a Certain Ancient Right", "McLeod", 1, "1st Reading", "First Reading (Dec 8, 2025)"),
+    ("2", "Act to Repeal the Clean Energy Act", "Laking", 5, "Royal Assent", "Assented (Mar 30, 2026)"),
+    ("3", "Opioid Damages and Health Care Costs Recovery Act", "Lang", 5, "Royal Assent", "Assented (Apr 7, 2026)"),
+    ("4", "Act to Amend the Financial Administration Act (2026)", "Dixon", 5, "Royal Assent", "Assented (Apr 7, 2026)"),
+    ("5", "Act to Amend the Health Authority Act (2026)", "Cathers", 5, "Royal Assent", "Assented (Apr 7, 2026)"),
+    ("6", "Act to Amend the Workers Safety and Compensation Act (2026)", "Lang", 5, "Royal Assent", "Assented (Nov 5, 2026)"),
+    ("7", "Finance Statute Law Amendment Act (2026)", "Gehmair", 5, "Royal Assent", "Assented (Oct 15, 2026)"),
+    ("8", "Act to Amend the Residential Tenancies Act (2026)", "Bellmore", 5, "Royal Assent", "Assented (Nov 5, 2026)"),
+    ("10", "Judicial Remuneration and Administration Amendments Act (2026)", "Lang", 5, "Royal Assent", "Assented (Oct 15, 2026)"),
+    ("11", "Yukon Firearms Act", "Lang", 5, "Royal Assent", "Assented (Nov 16, 2026)"),
+    ("12", "Miscellaneous Statute Law Amendment Act, 2026", "Lang", 5, "Royal Assent", "Assented (Oct 15, 2026)"),
+    ("13", "Labour Relations Boards Statutes Amendment Act (2026)", "Gehmair", 5, "Royal Assent", "Assented (Nov 5, 2026)"),
+    ("201", "First Appropriation Act 2026-27", "Dixon", 5, "Royal Assent", "Assented (May 11, 2026)"),
+    ("202", "Interim Supply Appropriation Act 2026-27", "Dixon", 5, "Royal Assent", "Assented (Mar 30, 2026)"),
+    ("203", "Interim Capital Appropriation Act 2027-28", "Dixon", 5, "Royal Assent", "Assented (Oct 15, 2026)"),
+    ("204", "Second Appropriation Act 2026-27", "Dixon", 2, "2nd Reading", "Active in Committee of the Whole (Nov 2026)"),
+    ("205", "Third Appropriation Act 2025-26", "Dixon", 5, "Royal Assent", "Assented (Nov 5, 2026)"),
+    ("300", "Act to Amend the Elections Act (2026)", "Reti", 1, "1st Reading", "Introduced in 2026 Fall Sitting (Nov 2, 2026)"),
+]
+
+FALLBACK_BILLS.extend([
+    {
+        "id": f"YT-{num}",
+        "jurisdiction": "YT",
+        "jurisdictionName": "Yukon",
+        "number": f"Bill {num}",
+        "title": title,
+        "sponsor": f"{sponsor} — Yukon Legislative Assembly (36th Leg., 1st Session)",
+        "stageStep": step,
+        "stageLabel": label,
+        "latestActivity": activity,
+        "background": f"Yukon Legislative Assembly progress record: {title}.",
+        "officialUrl": "https://yukonassembly.ca/house-business/progress-bills",
+    }
+    for num, title, sponsor, step, label, activity in YUKON_36_1_BILLS
+])
+
+# Northwest Territories 20th Assembly, 1st Session (Fall 2026)
+NWT_20_1_BILLS = [
+    ("67", "Appropriation Act (Infrastructure Expenditures) 2027-2028", 5, "Royal Assent", "Assented (Nov 6, 2026)"),
+    ("66", "An Act to Amend the Motor Vehicles Act No. 2 (Scooters and Seatbelts)", 3, "Committee", "Committee Review completed (Nov 6, 2026)"),
+    ("65", "Supplementary Appropriation Act (Operations Expenditures), No. 2, 2026-2027", 5, "Royal Assent", "Assented (Nov 6, 2026)"),
+    ("64", "Supplementary Appropriation Act (Infrastructure Expenditures), No. 2, 2026-2027", 5, "Royal Assent", "Assented (Nov 6, 2026)"),
+    ("63", "Electoral Boundaries Reform Act", 1, "1st Reading", "First Reading completed (Nov 4, 2026)"),
+    ("62", "Residential School Remains Identification and Repatriation Act", 1, "1st Reading", "First Reading completed (Nov 4, 2026)"),
+    ("61", "Public Service Labour Relations Act", 1, "1st Reading", "First Reading completed (Nov 4, 2026)"),
+    ("60", "Fuel Tax Suspension Act", 2, "2nd Reading", "Second Reading completed (Nov 4, 2026)"),
+    ("59", "An Act to Amend the Legislative Assembly and Executive Council Act, No. 2", 1, "1st Reading", "First Reading completed (Oct 29, 2026)"),
+    ("58", "Elections Act", 3, "Committee", "Committee Review completed (Oct 29, 2026)"),
+    ("57", "An Act to Amend the Employment Standards Act", 2, "2nd Reading", "Second Reading completed (Oct 28, 2026)"),
+    ("56", "Health and Social Services Professions Statutes Amendment Act", 2, "2nd Reading", "Second Reading completed (Oct 28, 2026)"),
+    ("49", "Safer Communities and Neighbourhoods Act", 2, "2nd Reading", "20th Assembly, 1st Session"),
+]
+
+FALLBACK_BILLS.extend([
+    {
+        "id": f"NT-{num}",
+        "jurisdiction": "NT",
+        "jurisdictionName": "Northwest Territories",
+        "number": f"Bill {num}",
+        "title": title,
+        "sponsor": "Legislative Assembly of the NWT (20th Assembly, 1st Session)",
+        "stageStep": step,
+        "stageLabel": label,
+        "latestActivity": activity,
+        "background": f"Northwest Territories Legislative Assembly bill: {title}.",
+        "officialUrl": "https://www.ntlegislativeassembly.ca/documents-proceedings/bills",
+    }
+    for num, title, step, label, activity in NWT_20_1_BILLS
+])
+
+# Prince Edward Island 67th General Assembly, 3rd Session
+PEI_67_3_BILLS = [
+    ("41", "Government Reorganization Act (No. 2)", 1, "1st Reading", "Introduced in 3rd Session, 67th General Assembly (Nov 2026)"),
+    ("27", "Appropriation Act 2026", 2, "2nd Reading", "3rd Session, 67th General Assembly (2026)"),
+    ("4", "An Act to Amend the Education Act", 1, "1st Reading", "First Reading (Mar 26, 2026) — 3rd Session, 67th General Assembly"),
+    ("101", "An Act to Amend the Community Care Facilities and Nursing Homes Act", 1, "1st Reading", "Private Member's Bill — First Reading (Apr 1, 2026)"),
+]
+
+FALLBACK_BILLS.extend([
+    {
+        "id": f"PE-{num}",
+        "jurisdiction": "PE",
+        "jurisdictionName": "Prince Edward Island",
+        "number": f"Bill {num}",
+        "title": title,
+        "sponsor": "Legislative Assembly of PEI (67th General Assembly, 3rd Session)",
+        "stageStep": step,
+        "stageLabel": label,
+        "latestActivity": activity,
+        "background": f"PEI Legislative Assembly bill (67th General Assembly, 3rd Session): {title}.",
+        "officialUrl": "https://www.assembly.pe.ca/legislative-business/house-records/bills",
+    }
+    for num, title, step, label, activity in PEI_67_3_BILLS
+])
+
+# New Brunswick 61st Legislature, 3rd Session (14 bills)
 NB_61_3_BILLS = [
     ("14", "An Act Respecting Property Tax Reform Measures", 2, "2nd Reading"),
     ("13", "An Act to Amend the Université de Moncton Act", 4, "3rd Reading"),
@@ -284,7 +345,7 @@ FALLBACK_BILLS.extend([
     for num, title, step, label in NB_61_3_BILLS
 ])
 
-# Full Alberta 31st Legislature, 2nd Session safety fallback
+# Full Alberta 31st Legislature, 2nd Session fallback
 ALBERTA_31_2_BILLS = [
     ("1", "International Agreements Act"),
     ("2", "Back to School Act"),
@@ -404,12 +465,15 @@ def make_bill(jur_code, jur_name, num_clean, title, sponsor, status_text, url, s
     }
 
 
-def fetch_html_with_browser(browser, url, wait_ms=3500):
+def fetch_html_with_browser(browser, url, wait_ms=3500, jur_code=""):
     context = browser.new_context(user_agent=HEADERS["User-Agent"])
     page = context.new_page()
     try:
         page.goto(url, wait_until="domcontentloaded", timeout=35000)
         page.wait_for_timeout(wait_ms)
+        title = page.title()
+        if jur_code:
+            print(f"[{jur_code}] Page title: {title!r}")
         return page.content()
     finally:
         context.close()
@@ -651,7 +715,7 @@ def fetch_nl_bills():
 
 
 # ---------------------------------------------------------------------------
-# 6. NEW BRUNSWICK (Matches "14. An Act Respecting..." without length cap)
+# 6. NEW BRUNSWICK
 # ---------------------------------------------------------------------------
 def fetch_nb_bills(browser=None):
     url = "https://www.legnb.ca/en/legislation/bills/61/3"
@@ -695,7 +759,7 @@ def fetch_nb_bills(browser=None):
     bills = parse_nb(html) if html else []
     if len(bills) < 3 and browser:
         try:
-            js_html = fetch_html_with_browser(browser, url, wait_ms=3500)
+            js_html = fetch_html_with_browser(browser, url, wait_ms=3500, jur_code="NB")
             bills = parse_nb(js_html)
         except Exception as e:
             print(f"[NB] Playwright note: {e}")
@@ -703,7 +767,7 @@ def fetch_nb_bills(browser=None):
 
 
 # ---------------------------------------------------------------------------
-# 7. NORTHWEST TERRITORIES (Playwright-assisted to bypass 403)
+# 7. NORTHWEST TERRITORIES
 # ---------------------------------------------------------------------------
 def fetch_nwt_bills(browser=None):
     base_url = "https://www.ntlegislativeassembly.ca/documents-proceedings/bills"
@@ -715,7 +779,7 @@ def fetch_nwt_bills(browser=None):
         html = ""
         if browser:
             try:
-                html = fetch_html_with_browser(browser, url, wait_ms=2500)
+                html = fetch_html_with_browser(browser, url, wait_ms=2500, jur_code="NT" if page_num == 0 else "")
             except Exception as e:
                 print(f"[NT] Playwright note (page {page_num}): {e}")
         if not html:
@@ -759,14 +823,14 @@ def fetch_nwt_bills(browser=None):
 
 
 # ---------------------------------------------------------------------------
-# 8. YUKON (Playwright domcontentloaded to bypass 403 & avoid timeout)
+# 8. YUKON
 # ---------------------------------------------------------------------------
 def fetch_yukon_bills(browser=None):
     url = "https://yukonassembly.ca/house-business/progress-bills"
     html = ""
     if browser:
         try:
-            html = fetch_html_with_browser(browser, url, wait_ms=4000)
+            html = fetch_html_with_browser(browser, url, wait_ms=4000, jur_code="YT")
         except Exception as e:
             print(f"[YT] Playwright note: {e}")
     if not html:
@@ -822,14 +886,14 @@ def fetch_yukon_bills(browser=None):
 
 
 # ---------------------------------------------------------------------------
-# 9. PRINCE EDWARD ISLAND (Matches table rows + docs.assembly.pe.ca bill PDFs)
+# 9. PRINCE EDWARD ISLAND
 # ---------------------------------------------------------------------------
 def fetch_pei_bills(browser):
     url = "https://www.assembly.pe.ca/legislative-business/house-records/bills"
     html = ""
     if browser:
         try:
-            html = fetch_html_with_browser(browser, url, wait_ms=4500)
+            html = fetch_html_with_browser(browser, url, wait_ms=4500, jur_code="PE")
         except Exception as e:
             print(f"[PE] Playwright note: {e}")
     if not html:
@@ -983,7 +1047,8 @@ def ensure_sectors(bill_list):
 def choose_best(code, live, existing_by_jur, fallback_by_jur):
     saved = existing_by_jur.get(code, [])
     fallback = fallback_by_jur.get(code, [])
-    best_backup = saved if len(saved) >= len(fallback) else fallback
+    # Use whichever backup has more bills (prevents stale 1-bill cache from hiding a richer fallback)
+    best_backup = saved if len(saved) > len(fallback) and len(saved) >= 3 else fallback
     if live and len(live) >= min(3, len(best_backup)):
         print(f"[{code}] Live fetch succeeded: {len(live)} bills.")
         return ensure_sectors(live)
@@ -1061,7 +1126,7 @@ def main():
             if len(live) < 3 and browser:
                 try:
                     print(f"[{code}] Rendering JS page with Playwright...")
-                    html = fetch_html_with_browser(browser, url)
+                    html = fetch_html_with_browser(browser, url, jur_code=code)
                     js_bills = parse_bills_from_html(html, url, code, name, sponsor)
                     if len(js_bills) > len(live):
                         live = js_bills
