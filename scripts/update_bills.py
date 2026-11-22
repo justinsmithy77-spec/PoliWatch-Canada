@@ -537,7 +537,6 @@ def fetch_alberta_bills():
     reader = PdfReader(io.BytesIO(res.content))
 
     full_text = "\n".join((page.extract_text() or "") for page in reader.pages)
-    # Split on bill headers like "Bill 12", "Bill 201", "Bill Pr1" at start of line
     chunks = re.split(r"(?m)(?=^\s*Bill\s+(?:Pr)?\d+\b)", full_text)
 
     date_re = r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}"
@@ -551,44 +550,43 @@ def fetch_alberta_bills():
         if num in seen:
             continue
 
-        body = m.group(2)
-        # Header ends before First Reading / 1st Reading / Second Reading
+        body_flat = " ".join(m.group(2).split())
         header = re.split(
             r"\b(?:First Reading|1st Reading|Second Reading|2nd Reading|Committee of the Whole|Third Reading|Royal Assent)\b",
-            body,
+            body_flat,
             maxsplit=1,
             flags=re.I,
-        )[0]
-        header_clean = " ".join(header.split()).strip()
+        )[0].strip()
 
-        # Sponsor is in trailing parentheses per official Alberta BSR format
         sponsor = "Legislative Assembly of Alberta (31st Leg., 2nd Session)"
-        sm = re.search(r"\(([^()]{2,60})\)\s*$", header_clean)
+        sm = re.search(r"\(([^()]{2,60})\)\s*\.?\s*$", header)
         if sm and not re.match(r"^No\.\s*\d+$", sm.group(1), re.I):
             sponsor = f"{sm.group(1).strip()} — 31st Legislature, 2nd Session"
-            title = header_clean[:sm.start()].strip(" -–:,.")
+            title = header[:sm.start()].strip()
         else:
-            title = header_clean.strip(" -–:,.")
+            title = header
 
+        title = re.sub(r"\s*\(\$\)\s*", " ", title).strip(" —-–:,.")
         if len(title) < 4:
             continue
 
-        # Determine highest completed stage with a date in this bill's block
         stage_checks = [
-            (5, "Royal Assent", rf"Royal\s+Assent[^\n]*?({date_re})"),
-            (4, "3rd Reading", rf"(?:Third|3rd)\s+Reading[^\n]*?({date_re})"),
-            (3, "Committee", rf"Committee(?:\s+of\s+the\s+Whole)?[^\n]*?({date_re})"),
-            (2, "2nd Reading", rf"(?:Second|2nd)\s+Reading[^\n]*?({date_re})"),
-            (1, "1st Reading", rf"(?:First|1st)\s+Reading[^\n]*?({date_re})"),
+            (5, "Royal Assent", r"\bRoyal\s+Assent\b"),
+            (4, "3rd Reading", r"\b(?:Third|3rd)\s+Reading\b"),
+            (3, "Committee", r"\bCommittee\s+of\s+the\s+Whole\b"),
+            (2, "2nd Reading", r"\b(?:Second|2nd)\s+Reading\b"),
+            (1, "1st Reading", r"\b(?:First|1st)\s+Reading\b"),
         ]
 
         stage_override = (1, "1st Reading")
         latest_activity = "31st Legislature, 2nd Session"
-        for step, label, pattern in stage_checks:
-            dm = re.search(pattern, body, re.I)
-            if dm:
+        for step, label, kw_pattern in stage_checks:
+            km = re.search(kw_pattern, body_flat, re.I)
+            if km:
                 stage_override = (step, label)
-                latest_activity = f"{label} ({dm.group(1)})"
+                window = body_flat[km.end(): km.end() + 120]
+                dm = re.search(date_re, window, re.I)
+                latest_activity = f"{label} ({dm.group(0)})" if dm else f"{label} — 31st Legislature, 2nd Session"
                 break
 
         seen.add(num)
