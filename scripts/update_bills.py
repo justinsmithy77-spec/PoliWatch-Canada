@@ -550,7 +550,7 @@ def fetch_manitoba_bills():
         cols = [c.get_text(" ", strip=True) for c in row.find_all(["td", "th"])]
         if len(cols) < 3:
             continue
-        m = re.search(r"^\s*(?:Bill\s*)?(\d+)\s*$", cols[0], re.I)
+        m = re.search(r"^\s*(?:Bill\s*)?(\d+)\.?\s*$", cols[0], re.I)
         if not m:
             continue
         num = m.group(1)
@@ -567,7 +567,7 @@ def fetch_manitoba_bills():
 
 
 # ---------------------------------------------------------------------------
-# 5. NEWFOUNDLAND & LABRADOR (All 37 rows across 51st Assembly, 1st Session)
+# 5. NEWFOUNDLAND & LABRADOR (All 37 rows; handles trailing period e.g. "1.")
 # ---------------------------------------------------------------------------
 def fetch_nl_bills():
     url = "https://www.assembly.nl.ca/HouseBusiness/Bills/ga51session1/"
@@ -581,7 +581,7 @@ def fetch_nl_bills():
         cols = [" ".join(c.get_text(" ", strip=True).split()) for c in cells]
         if len(cols) < 2:
             continue
-        m = re.search(r"^(?:Bill\s*)?(\d+[A-Za-z]?)$", cols[0], re.I)
+        m = re.search(r"^(?:Bill\s*)?(\d+[A-Za-z]?)\.?$", cols[0], re.I)
         if not m:
             continue
         num = m.group(1).upper()
@@ -628,7 +628,7 @@ def fetch_nl_bills():
 
 
 # ---------------------------------------------------------------------------
-# 6. YUKON (All sitting tables on Progress of Bills: Fall & Spring)
+# 6. YUKON (All sitting tables; handles trailing period e.g. "204.")
 # ---------------------------------------------------------------------------
 def fetch_yukon_bills():
     url = "https://yukonassembly.ca/house-business/progress-bills"
@@ -642,7 +642,7 @@ def fetch_yukon_bills():
         cols = [" ".join(c.get_text(" ", strip=True).split()) for c in cells]
         if len(cols) < 2:
             continue
-        m = re.search(r"^(?:Bill\s*)?(\d+[A-Za-z]?)$", cols[0], re.I)
+        m = re.search(r"^(?:Bill\s*)?(\d+[A-Za-z]?)\.?$", cols[0], re.I)
         if not m:
             continue
         num = m.group(1).upper()
@@ -687,7 +687,7 @@ def fetch_yukon_bills():
 def fetch_nwt_bills():
     base_url = "https://www.ntlegislativeassembly.ca/documents-proceedings/bills"
     bills, seen = [], set()
-    bill_re = re.compile(r"Bill\s+(\d+[A-Za-z]?)\s*[:\-–]?\s*(.*)", re.I)
+    bill_re = re.compile(r"Bill\s+(\d+[A-Za-z]?)\.?\s*[:\-–]?\s*(.*)", re.I)
 
     for page_num in range(12):
         url = base_url if page_num == 0 else f"{base_url}?page={page_num}"
@@ -758,13 +758,13 @@ def fetch_pei_bills(browser):
 
     soup = BeautifulSoup(html, "html.parser")
     bills, seen = [], set()
-    bill_re = re.compile(r"Bill\s+(?:No\.?\s*)?(\d+[A-Za-z]?)\s*[:\-–,]?\s*(.*)", re.I)
+    bill_re = re.compile(r"Bill\s+(?:No\.?\s*)?(\d+[A-Za-z]?)\.?\s*[:\-–,]?\s*(.*)", re.I)
 
     for row in soup.select("table tr"):
         cols = [" ".join(c.get_text(" ", strip=True).split()) for c in row.find_all(["td", "th"])]
         if len(cols) < 2:
             continue
-        m = re.search(r"^(?:Bill\s*(?:No\.?\s*)?)?(\d+[A-Za-z]?)$", cols[0], re.I)
+        m = re.search(r"^(?:Bill\s*(?:No\.?\s*)?)?(\d+[A-Za-z]?)\.?$", cols[0], re.I)
         if not m:
             continue
         num = m.group(1).upper()
