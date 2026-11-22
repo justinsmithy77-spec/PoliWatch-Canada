@@ -27,19 +27,6 @@ FALLBACK_BILLS = [
         "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-39",
     },
     {
-        "id": "AB-43",
-        "jurisdiction": "AB",
-        "jurisdictionName": "Alberta",
-        "number": "Bill 43",
-        "title": "Transportation (Safe and Sensible Roads) Statutes Amendment Act, 2026",
-        "sponsor": "Government Bill (31st Legislature, 2nd Session)",
-        "stageStep": 1,
-        "stageLabel": "1st Reading",
-        "latestActivity": "Introduced in the Legislative Assembly of Alberta",
-        "background": "Amends provincial transportation statutes regarding road safety, highway rules, and traffic enforcement.",
-        "officialUrl": "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature",
-    },
-    {
         "id": "BC-1",
         "jurisdiction": "BC",
         "jurisdictionName": "British Columbia",
@@ -197,6 +184,87 @@ FALLBACK_BILLS = [
     },
 ]
 
+# Full Alberta 31st Legislature, 2nd Session (2025-2026) bill list
+ALBERTA_31_2_BILLS = [
+    ("1", "International Agreements Act"),
+    ("2", "Back to School Act"),
+    ("3", "Private Vocational Training Amendment Act, 2025"),
+    ("4", "Public Safety and Emergency Services Statutes Amendment Act, 2025 (No. 2)"),
+    ("5", "Miscellaneous Statutes Amendment Act, 2025"),
+    ("6", "Education (Prioritizing Literacy and Numeracy) Amendment Act, 2025 (No. 2)"),
+    ("7", "Water Amendment Act, 2025"),
+    ("8", "Utilities Statutes Amendment Act, 2025"),
+    ("9", "Protecting Alberta's Children Statutes Amendment Act, 2025"),
+    ("10", "Red Tape Reduction Statutes Amendment Act, 2025 (No. 2)"),
+    ("11", "Health Statutes Amendment Act, 2025 (No. 2)"),
+    ("12", "Financial Statutes Amendment Act, 2025 (No. 2)"),
+    ("13", "Regulated Professions Neutrality Act"),
+    ("14", "Justice Statutes Amendment Act, 2025"),
+    ("15", "Public Safety and Emergency Services Statutes Amendment Act, 2026"),
+    ("16", "Traveller Protection and Destination Development Act"),
+    ("17", "Fiscal Measures Statutes Amendment Act, 2026"),
+    ("18", "Safeguards for Last Resort Termination of Life Act"),
+    ("19", "Appropriation Act, 2026"),
+    ("20", "Appropriation (Supplementary Supply) Act, 2026"),
+    ("21", "Interprovincial Trade Mutual Recognition Act"),
+    ("22", "Animal Protection Amendment Act, 2026"),
+    ("23", "Justice Statutes Amendment Act, 2026"),
+    ("24", "Alberta Whisky Act"),
+    ("25", "An Act to Remove Politics and Ideology from Classrooms and Amend the Education Act, 2026"),
+    ("26", "Immigration Oversight Act"),
+    ("27", "Financial Statutes Amendment Act, 2026"),
+    ("28", "Municipal Affairs and Housing Statutes Amendment Act, 2026"),
+    ("29", "Health Statutes Amendment Act, 2026"),
+    ("30", "Expedited 120-Day Approvals Act"),
+    ("31", "Red Tape Reduction Statutes Amendment Act, 2026"),
+    ("32", "Electoral Boundaries Commission Amendment Act, 2026"),
+    ("33", "Justice Statutes Amendment Act, 2026 (No. 2)"),
+    ("34", "Service Alberta and Red Tape Reduction Statutes Amendment Act, 2026"),
+    ("35", "Education and Childcare (Securing Parental Involvement) Statutes Amendment Act, 2026"),
+    ("36", "Children and Family Services (Supporting Alberta Families) Statutes Amendment Act, 2026"),
+    ("37", "Miscellaneous Statutes Amendment Act, 2026"),
+    ("38", "Advanced Education Statutes Amendment Act, 2026"),
+    ("39", "Health Statutes Amendment Act, 2026 (No. 2)"),
+    ("40", "Electoral Divisions Act"),
+    ("41", "Financial Statutes Amendment Act, 2026 (No. 2)"),
+    ("42", "Energy, Environment and Utilities Statutes Amendment Act, 2026"),
+    ("43", "Transportation (Safe and Sensible Roads) Statutes Amendment Act, 2026"),
+    ("201", "Employment Standards (Protecting Workers' Pay) Amendment Act, 2025"),
+    ("202", "Conflicts of Interest (Ethical Governance) Amendment Act, 2025"),
+    ("203", "Energy Storage Planning for Investment Act"),
+    ("204", "Public Interest Disclosure (Publicly Funded Health Entity Whistleblower Protection) Act"),
+    ("205", "Non-Disclosure Agreements Act"),
+    ("206", "Accessible Alberta Act"),
+    ("207", "Primary Provincial Industries Recognition Statutes Amendment Act, 2026"),
+    ("208", "Tobacco, Smoking and Vaping Reduction Amendment Act, 2026"),
+    ("209", "Consumer Protection (Affordability Measures) Amendment Act, 2026"),
+    ("210", "Consumer Protection (Fraud Prevention Measures) Amendment Act, 2026"),
+    ("211", "Patient Outcomes Reporting Act"),
+    ("212", "Pharmacy Statutes (Rewards Points) Amendment Act, 2026"),
+    ("213", "Alberta Personal Income Tax (Emergency Services Volunteer Tax Credits) Amendment Act, 2026"),
+    ("214", "Alberta Health Care Insurance (Protecting Public Health Care) Amendment Act, 2026"),
+    ("215", "Municipal Government (Reserve Land Use) Amendment Act, 2026"),
+    ("Pr1", "The Ranchmen's Club Ordinance Amendment Act, 2026"),
+    ("Pr2", "Prairie Bible Institute Amendment Act, 2026"),
+]
+
+FALLBACK_BILLS.extend([
+    {
+        "id": f"AB-{num}",
+        "jurisdiction": "AB",
+        "jurisdictionName": "Alberta",
+        "number": f"Bill {num}",
+        "title": title,
+        "sponsor": "31st Legislature, 2nd Session (2025–2026)",
+        "stageStep": 1,
+        "stageLabel": "Active",
+        "latestActivity": "31st Legislature, 2nd Session",
+        "background": f"Active legislation before the Legislative Assembly of Alberta: {title}.",
+        "officialUrl": "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature",
+    }
+    for num, title in ALBERTA_31_2_BILLS
+])
+
 
 def map_stage(status_text):
     text = (status_text or "").lower()
@@ -256,7 +324,7 @@ def fetch_federal_bills():
 
 
 def scrape_provincial_bills(url, jur_code, jur_name, default_sponsor):
-    """Two-stage scraper: checks HTML tables first, then falls back to list/link patterns (e.g. Alberta)."""
+    """Two-stage scraper: checks HTML tables first, then falls back to list/link patterns."""
     res = requests.get(url, headers=HEADERS, timeout=25)
     res.raise_for_status()
     soup = BeautifulSoup(res.text, "html.parser")
@@ -302,7 +370,7 @@ def scrape_provincial_bills(url, jur_code, jur_name, default_sponsor):
             "officialUrl": full_url,
         })
 
-    # Stage 2: List items (<li>) and links (<a>) for sites like Alberta that don't use tables
+    # Stage 2: List items (<li>) and links (<a>) for sites that don't use tables
     if len(bills) < 3:
         bill_pattern = re.compile(
             r"^\s*Bill\s+([A-Za-z]{0,2}-?\d+[A-Za-z]?)\s*[\.\-–:]?\s+(.{5,220})$",
@@ -389,7 +457,9 @@ def main():
             raise ValueError("Empty federal response")
     except Exception as e:
         print(f"[FED] Live fetch skipped ({e}); using saved/fallback bills.")
-        final_bills.extend(existing_by_jur.get("FED") or fallback_by_jur.get("FED", []))
+        saved = existing_by_jur.get("FED", [])
+        fallback = fallback_by_jur.get("FED", [])
+        final_bills.extend(saved if len(saved) >= len(fallback) else fallback)
 
     # 2. All 13 Provinces & Territories (Live table + list scrapers with safe fallbacks)
     for code, name, url, sponsor in PROVINCIAL_SOURCES:
@@ -402,7 +472,9 @@ def main():
                 raise ValueError("No bills matched")
         except Exception as e:
             print(f"[{code}] Live fetch skipped ({e}); using saved/fallback bills.")
-            final_bills.extend(existing_by_jur.get(code) or fallback_by_jur.get(code, []))
+            saved = existing_by_jur.get(code, [])
+            fallback = fallback_by_jur.get(code, [])
+            final_bills.extend(saved if len(saved) >= len(fallback) else fallback)
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     payload = {
