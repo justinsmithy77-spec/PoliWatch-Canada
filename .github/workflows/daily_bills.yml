@@ -2,8 +2,7 @@ name: Daily Bill Updater
 
 on:
   schedule:
-    # Runs every morning at 6:00 AM Mountain Time (13:00 UTC)
-    - cron: '0 13 * * *'
+    - cron: '0 12 * * *' # Runs daily at 6:00 AM Mountain Time
   workflow_dispatch:
 
 permissions:
@@ -21,16 +20,19 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install required packages
-        run: pip install requests beautifulsoup4
+      - name: Install dependencies and Playwright browser
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4 pypdf playwright
+          playwright install --with-deps chromium
 
-      - name: Fetch latest Canadian bills
+      - name: Run bill updater script
         run: python scripts/update_bills.py
 
-      - name: Save updated bills to repository
+      - name: Commit and push updated bills
         run: |
-          git config user.name "PoliWatch Bot"
-          git config user.email "bot@poliwatchcanada.ca"
+          git config --local user.name "PoliWatch Bot"
+          git config --local user.email "bot@polimonitor.ca"
           git add data/all_bills.json
           git diff --staged --quiet || git commit -m "Auto-update daily Canadian bills"
           git push
