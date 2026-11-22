@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-22T02:52:53Z",
+  "updated": "2026-11-22T03:06:20Z",
   "count": 999,
   "bills": [
     {
@@ -5119,7 +5119,7 @@
       "number": "Bill 72",
       "title": "The Opioid Damages Amendment Act,",
       "sponsor": "Legislative Assembly of Saskatchewan (30th Legislature, 3rd Session)",
-      "sector": "Governance & General",
+      "sector": "Healthcare",
       "stageStep": 1,
       "stageLabel": "1st Reading",
       "latestActivity": "Active on Progress of Bills",
@@ -5231,7 +5231,7 @@
       "number": "Bill 80",
       "title": "The Alcohol and Gaming Regulation",
       "sponsor": "Legislative Assembly of Saskatchewan (30th Legislature, 3rd Session)",
-      "sector": "Governance & General",
+      "sector": "Economy & Finance",
       "stageStep": 1,
       "stageLabel": "1st Reading",
       "latestActivity": "Active on Progress of Bills",
@@ -5811,20 +5811,6 @@
       "latestActivity": "Royal Assent (June 2, 2026)",
       "background": "Active legislation before the House of Assembly of NL (51st Assembly, 1st Session): Pharmaceutical Services Act (Amdt.).",
       "officialUrl": "https://www.assembly.nl.ca/HouseBusiness/Bills/ga51session1/bill2619.htm"
-    },
-    {
-      "id": "YT-204",
-      "jurisdiction": "YT",
-      "jurisdictionName": "Yukon",
-      "number": "Bill 204",
-      "title": "Second Appropriation Act 2026-27",
-      "sponsor": "Premier of Yukon",
-      "stageStep": 2,
-      "stageLabel": "2nd Reading",
-      "latestActivity": "Active on the Yukon Order Paper",
-      "background": "Authorizes supplementary territorial government appropriations for the 2026-27 fiscal year.",
-      "officialUrl": "https://yukonassembly.ca/house-business/progress-bills",
-      "sector": "Economy & Finance"
     },
     {
       "id": "NT-66",
@@ -7359,7 +7345,7 @@
       "number": "Bill 108",
       "title": "Gaming Control Act (amended) View bill status",
       "sponsor": "Nova Scotia House of Assembly",
-      "sector": "Governance & General",
+      "sector": "Economy & Finance",
       "stageStep": 1,
       "stageLabel": "1st Reading",
       "latestActivity": "Private Member's Bill",
@@ -10165,6 +10151,34 @@
       "latestActivity": "Private Member's Bill",
       "background": "Active legislation before the Nova Scotia House of Assembly: Family Property Continuity Act View bill status.",
       "officialUrl": "https://nslegislature.ca/legc/bills/65th_1st/1st_read/b308.htm"
+    },
+    {
+      "id": "NB-14",
+      "jurisdiction": "NB",
+      "jurisdictionName": "New Brunswick",
+      "number": "Bill 14",
+      "title": "An Act Respecting Property Tax Reform Measures",
+      "sponsor": "Government Bill (61st Legislature, 3rd Session)",
+      "stageStep": 2,
+      "stageLabel": "2nd Reading",
+      "latestActivity": "Second Reading passed in New Brunswick Legislature",
+      "background": "Implements provincial property tax reform and assessment relief measures.",
+      "officialUrl": "https://www.legnb.ca/en/legislation/bills",
+      "sector": "Housing & Municipal"
+    },
+    {
+      "id": "YT-204",
+      "jurisdiction": "YT",
+      "jurisdictionName": "Yukon",
+      "number": "Bill 204",
+      "title": "Second Appropriation Act 2026-27",
+      "sponsor": "Premier of Yukon",
+      "stageStep": 2,
+      "stageLabel": "2nd Reading",
+      "latestActivity": "Active on the Yukon Order Paper",
+      "background": "Authorizes supplementary territorial government appropriations for the 2026-27 fiscal year.",
+      "officialUrl": "https://yukonassembly.ca/house-business/progress-bills",
+      "sector": "Economy & Finance"
     },
     {
       "id": "PE-41",
@@ -13763,20 +13777,6 @@
       "background": "Active legislation before the National Assembly of Quebec: An Act to replace the name of the electoral division of Arthabaska by the name “Arthabaska-L’Érable” An Act to replace the name of the electoral division of Arthabaska by the name “Arthabaska-L’Érable” Stages in the consideration of Bill\r\n\t\t\t\t\t\t996.",
       "officialUrl": "https://www.publicationsduquebec.gouv.qc.ca/fileadmin/Fichiers_client/lois_et_reglements/LoisAnnuelles/en/2025/2025C22A.PDF",
       "sector": "Governance & General"
-    },
-    {
-      "id": "NB-14",
-      "jurisdiction": "NB",
-      "jurisdictionName": "New Brunswick",
-      "number": "Bill 14",
-      "title": "An Act Respecting Property Tax Reform Measures",
-      "sponsor": "Government Bill (61st Legislature, 3rd Session)",
-      "stageStep": 2,
-      "stageLabel": "2nd Reading",
-      "latestActivity": "Second Reading passed in New Brunswick Legislature",
-      "background": "Implements provincial property tax reform and assessment relief measures.",
-      "officialUrl": "https://www.legnb.ca/en/legislation/bills",
-      "sector": "Housing & Municipal"
     },
     {
       "id": "NU-15",
