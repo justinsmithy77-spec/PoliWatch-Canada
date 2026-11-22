@@ -345,7 +345,7 @@ FALLBACK_BILLS.extend([
     for num, title, step, label in NB_61_3_BILLS
 ])
 
-# Full Alberta 31st Legislature, 2nd Session fallback
+# Full Alberta 31st Legislature, 2nd Session safety fallback (only used if official PDF is unreachable)
 ALBERTA_31_2_BILLS = [
     ("1", "International Agreements Act"),
     ("2", "Back to School Act"),
@@ -525,7 +525,91 @@ def fetch_federal_bills():
 
 
 # ---------------------------------------------------------------------------
-# 2. ONTARIO (Paginated OLA card/heading parser)
+# 2. ALBERTA (Live Official Bill Status Report PDF — exact stages & sponsors)
+# ---------------------------------------------------------------------------
+def fetch_alberta_bills():
+    if not PYPDF_AVAILABLE:
+        return []
+    pdf_url = "https://www.assembly.ab.ca/LAO/Bills/bsr31-2.pdf"
+    portal_url = "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature"
+    res = requests.get(pdf_url, headers=HEADERS, timeout=30)
+    res.raise_for_status()
+    reader = PdfReader(io.BytesIO(res.content))
+
+    full_text = "\n".join((page.extract_text() or "") for page in reader.pages)
+    # Split on bill headers like "Bill 12", "Bill 201", "Bill Pr1" at start of line
+    chunks = re.split(r"(?m)(?=^\s*Bill\s+(?:Pr)?\d+\b)", full_text)
+
+    date_re = r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}"
+    bills, seen = [], set()
+
+    for chunk in chunks:
+        m = re.match(r"^\s*Bill\s+((?:Pr)?\d+)\b\s*(.+)", chunk, re.S)
+        if not m:
+            continue
+        num = m.group(1)
+        if num in seen:
+            continue
+
+        body = m.group(2)
+        # Header ends before First Reading / 1st Reading / Second Reading
+        header = re.split(
+            r"\b(?:First Reading|1st Reading|Second Reading|2nd Reading|Committee of the Whole|Third Reading|Royal Assent)\b",
+            body,
+            maxsplit=1,
+            flags=re.I,
+        )[0]
+        header_clean = " ".join(header.split()).strip()
+
+        # Sponsor is in trailing parentheses per official Alberta BSR format
+        sponsor = "Legislative Assembly of Alberta (31st Leg., 2nd Session)"
+        sm = re.search(r"\(([^()]{2,60})\)\s*$", header_clean)
+        if sm and not re.match(r"^No\.\s*\d+$", sm.group(1), re.I):
+            sponsor = f"{sm.group(1).strip()} — 31st Legislature, 2nd Session"
+            title = header_clean[:sm.start()].strip(" -–:,.")
+        else:
+            title = header_clean.strip(" -–:,.")
+
+        if len(title) < 4:
+            continue
+
+        # Determine highest completed stage with a date in this bill's block
+        stage_checks = [
+            (5, "Royal Assent", rf"Royal\s+Assent[^\n]*?({date_re})"),
+            (4, "3rd Reading", rf"(?:Third|3rd)\s+Reading[^\n]*?({date_re})"),
+            (3, "Committee", rf"Committee(?:\s+of\s+the\s+Whole)?[^\n]*?({date_re})"),
+            (2, "2nd Reading", rf"(?:Second|2nd)\s+Reading[^\n]*?({date_re})"),
+            (1, "1st Reading", rf"(?:First|1st)\s+Reading[^\n]*?({date_re})"),
+        ]
+
+        stage_override = (1, "1st Reading")
+        latest_activity = "31st Legislature, 2nd Session"
+        for step, label, pattern in stage_checks:
+            dm = re.search(pattern, body, re.I)
+            if dm:
+                stage_override = (step, label)
+                latest_activity = f"{label} ({dm.group(1)})"
+                break
+
+        seen.add(num)
+        bills.append(
+            make_bill(
+                "AB",
+                "Alberta",
+                num,
+                title,
+                sponsor,
+                latest_activity,
+                portal_url,
+                stage_override=stage_override,
+            )
+        )
+
+    return bills
+
+
+# ---------------------------------------------------------------------------
+# 3. ONTARIO (Paginated OLA card/heading parser)
 # ---------------------------------------------------------------------------
 def fetch_ontario_bills():
     base_url = "https://www.ola.org/en/legislative-business/bills/current"
@@ -559,7 +643,7 @@ def fetch_ontario_bills():
 
 
 # ---------------------------------------------------------------------------
-# 3. SASKATCHEWAN (Live Progress of Bills PDF via pypdf layout mode)
+# 4. SASKATCHEWAN (Live Progress of Bills PDF via pypdf layout mode)
 # ---------------------------------------------------------------------------
 def fetch_saskatchewan_bills():
     if not PYPDF_AVAILABLE:
@@ -624,7 +708,7 @@ def fetch_saskatchewan_bills():
 
 
 # ---------------------------------------------------------------------------
-# 4. MANITOBA (Exact 3-column table: Bill No. | Sponsor | Title)
+# 5. MANITOBA (Exact 3-column table: Bill No. | Sponsor | Title)
 # ---------------------------------------------------------------------------
 def fetch_manitoba_bills():
     url = "https://web2.gov.mb.ca/bills/sess/index.php"
@@ -654,7 +738,7 @@ def fetch_manitoba_bills():
 
 
 # ---------------------------------------------------------------------------
-# 5. NEWFOUNDLAND & LABRADOR
+# 6. NEWFOUNDLAND & LABRADOR
 # ---------------------------------------------------------------------------
 def fetch_nl_bills():
     url = "https://www.assembly.nl.ca/HouseBusiness/Bills/ga51session1/"
@@ -715,7 +799,7 @@ def fetch_nl_bills():
 
 
 # ---------------------------------------------------------------------------
-# 6. NEW BRUNSWICK
+# 7. NEW BRUNSWICK
 # ---------------------------------------------------------------------------
 def fetch_nb_bills(browser=None):
     url = "https://www.legnb.ca/en/legislation/bills/61/3"
@@ -767,7 +851,7 @@ def fetch_nb_bills(browser=None):
 
 
 # ---------------------------------------------------------------------------
-# 7. NORTHWEST TERRITORIES
+# 8. NORTHWEST TERRITORIES
 # ---------------------------------------------------------------------------
 def fetch_nwt_bills(browser=None):
     base_url = "https://www.ntlegislativeassembly.ca/documents-proceedings/bills"
@@ -823,7 +907,7 @@ def fetch_nwt_bills(browser=None):
 
 
 # ---------------------------------------------------------------------------
-# 8. YUKON
+# 9. YUKON
 # ---------------------------------------------------------------------------
 def fetch_yukon_bills(browser=None):
     url = "https://yukonassembly.ca/house-business/progress-bills"
@@ -886,7 +970,7 @@ def fetch_yukon_bills(browser=None):
 
 
 # ---------------------------------------------------------------------------
-# 9. PRINCE EDWARD ISLAND
+# 10. PRINCE EDWARD ISLAND
 # ---------------------------------------------------------------------------
 def fetch_pei_bills(browser):
     url = "https://www.assembly.pe.ca/legislative-business/house-records/bills"
@@ -949,7 +1033,7 @@ def fetch_pei_bills(browser):
 
 
 # ---------------------------------------------------------------------------
-# 10. PAGINATED TABLE SCRAPER (Nova Scotia)
+# 11. PAGINATED TABLE SCRAPER (Nova Scotia)
 # ---------------------------------------------------------------------------
 def fetch_paginated_table_bills(base_url, jur_code, jur_name, default_sponsor, max_pages=10):
     bills, seen = [], set()
@@ -986,7 +1070,7 @@ def fetch_paginated_table_bills(base_url, jur_code, jur_name, default_sponsor, m
 
 
 # ---------------------------------------------------------------------------
-# 11. GENERIC TABLE + LIST PARSER (AB, BC, QC, NU)
+# 12. GENERIC TABLE + LIST PARSER (BC, QC, NU)
 # ---------------------------------------------------------------------------
 def parse_bills_from_html(html, url, jur_code, jur_name, default_sponsor):
     soup = BeautifulSoup(html, "html.parser")
@@ -1030,7 +1114,6 @@ def parse_bills_from_html(html, url, jur_code, jur_name, default_sponsor):
 
 
 GENERIC_SOURCES = [
-    ("AB", "Alberta", "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature", "Legislative Assembly of Alberta"),
     ("BC", "British Columbia", "https://www.leg.bc.ca/parliamentary-business/bills", "Legislative Assembly of British Columbia"),
     ("QC", "Quebec", "https://www.assnat.qc.ca/en/travaux-parlementaires/projets-loi/projets-loi-44-1.html", "National Assembly of Quebec"),
     ("NU", "Nunavut", "https://www.assembly.nu.ca/bills-and-legislation", "Legislative Assembly of Nunavut"),
@@ -1047,7 +1130,6 @@ def ensure_sectors(bill_list):
 def choose_best(code, live, existing_by_jur, fallback_by_jur):
     saved = existing_by_jur.get(code, [])
     fallback = fallback_by_jur.get(code, [])
-    # Use whichever backup has more bills (prevents stale 1-bill cache from hiding a richer fallback)
     best_backup = saved if len(saved) > len(fallback) and len(saved) >= 3 else fallback
     if live and len(live) >= min(3, len(best_backup)):
         print(f"[{code}] Live fetch succeeded: {len(live)} bills.")
@@ -1076,6 +1158,7 @@ def main():
 
     dedicated = [
         ("FED", fetch_federal_bills),
+        ("AB", fetch_alberta_bills),
         ("ON", fetch_ontario_bills),
         ("SK", fetch_saskatchewan_bills),
         ("MB", fetch_manitoba_bills),
