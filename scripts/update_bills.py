@@ -7,7 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (compatible; PoliMonitorCanada/2.0; +https://polimonitor.ca)"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
 }
 OUTPUT_PATH = "data/all_bills.json"
 
@@ -200,7 +200,7 @@ FALLBACK_BILLS = [
 
 def map_stage(status_text):
     text = (status_text or "").lower()
-    if "royal assent" in text or "assented" in text or "enacted" in text or "law" in text:
+    if "royal assent" in text or "assented" in text or "enacted" in text:
         return 5, "Royal Assent"
     if "third reading" in text or "3rd reading" in text or "passed" in text:
         return 4, "3rd Reading"
@@ -255,27 +255,25 @@ def fetch_federal_bills():
     return bills
 
 
-def scrape_html_table_bills(url, jur_code, jur_name, default_sponsor):
-    """Generic resilient HTML table scraper for provincial/territorial bill tables."""
+def scrape_provincial_bills(url, jur_code, jur_name, default_sponsor):
+    """Two-stage scraper: checks HTML tables first, then falls back to list/link patterns (e.g. Alberta)."""
     res = requests.get(url, headers=HEADERS, timeout=25)
     res.raise_for_status()
     soup = BeautifulSoup(res.text, "html.parser")
     bills = []
     seen = set()
 
+    # Stage 1: Standard HTML <table> rows
     for row in soup.select("table tr"):
         cols = [c.get_text(" ", strip=True) for c in row.find_all("td")]
         if len(cols) < 2:
             continue
 
-        # Identify bill number column (usually col 0, sometimes col 1)
-        num_raw = cols[0]
-        title_raw = cols[1]
+        num_raw, title_raw = cols[0], cols[1]
         if not re.search(r"\d+", num_raw) and len(cols) >= 3 and re.search(r"\d+", cols[1]):
-            num_raw = cols[1]
-            title_raw = cols[2]
+            num_raw, title_raw = cols[1], cols[2]
 
-        num_match = re.search(r"(?:Bill\s*)?([A-Za-z]?-?\d+[A-Za-z]?)", num_raw, re.I)
+        num_match = re.search(r"(?:Bill\s*)?([A-Za-z]{0,2}-?\d+[A-Za-z]?)", num_raw, re.I)
         if not num_match or len(title_raw) < 4:
             continue
 
@@ -303,6 +301,46 @@ def scrape_html_table_bills(url, jur_code, jur_name, default_sponsor):
             "background": f"Active legislation before the {default_sponsor}: {title_raw.strip()}.",
             "officialUrl": full_url,
         })
+
+    # Stage 2: List items (<li>) and links (<a>) for sites like Alberta that don't use tables
+    if len(bills) < 3:
+        bill_pattern = re.compile(
+            r"^\s*Bill\s+([A-Za-z]{0,2}-?\d+[A-Za-z]?)\s*[\.\-–:]?\s+(.{5,220})$",
+            re.I,
+        )
+        for el in soup.select("li, a, p, h3, h4"):
+            text = " ".join(el.get_text(" ", strip=True).split())
+            match = bill_pattern.match(text)
+            if not match:
+                continue
+
+            clean_num = match.group(1).upper()
+            title_raw = match.group(2).strip(" *$()")
+            if len(title_raw) < 5:
+                continue
+
+            bill_id = f"{jur_code}-{re.sub(r'[^A-Za-z0-9-]', '', clean_num)}"
+            if bill_id in seen:
+                continue
+            seen.add(bill_id)
+
+            link_el = el if el.name == "a" and el.get("href") else el.find("a", href=True)
+            full_url = urljoin(url, link_el["href"]) if link_el else url
+            step, label = map_stage(text)
+
+            bills.append({
+                "id": bill_id,
+                "jurisdiction": jur_code,
+                "jurisdictionName": jur_name,
+                "number": f"Bill {clean_num}",
+                "title": title_raw,
+                "sponsor": default_sponsor,
+                "stageStep": step,
+                "stageLabel": label,
+                "latestActivity": f"Active in {jur_name} Legislature",
+                "background": f"Active legislation before the {default_sponsor}: {title_raw}.",
+                "officialUrl": full_url,
+            })
 
     return bills
 
@@ -353,15 +391,15 @@ def main():
         print(f"[FED] Live fetch skipped ({e}); using saved/fallback bills.")
         final_bills.extend(existing_by_jur.get("FED") or fallback_by_jur.get("FED", []))
 
-    # 2. All 13 Provinces & Territories (Live HTML table scrapers with safe fallbacks)
+    # 2. All 13 Provinces & Territories (Live table + list scrapers with safe fallbacks)
     for code, name, url, sponsor in PROVINCIAL_SOURCES:
         try:
-            live = scrape_html_table_bills(url, code, name, sponsor)
+            live = scrape_provincial_bills(url, code, name, sponsor)
             if live:
                 print(f"[{code}] Fetched {len(live)} live bills.")
                 final_bills.extend(live)
             else:
-                raise ValueError("No bill rows matched")
+                raise ValueError("No bills matched")
         except Exception as e:
             print(f"[{code}] Live fetch skipped ({e}); using saved/fallback bills.")
             final_bills.extend(existing_by_jur.get(code) or fallback_by_jur.get(code, []))
