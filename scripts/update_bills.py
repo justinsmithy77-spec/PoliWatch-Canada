@@ -183,19 +183,6 @@ FALLBACK_BILLS = [
         "officialUrl": "https://nslegislature.ca/legislative-business/bills-statutes/current-bills",
     },
     {
-        "id": "NB-14",
-        "jurisdiction": "NB",
-        "jurisdictionName": "New Brunswick",
-        "number": "Bill 14",
-        "title": "An Act Respecting Property Tax Reform Measures",
-        "sponsor": "Government Bill (61st Legislature, 3rd Session)",
-        "stageStep": 2,
-        "stageLabel": "2nd Reading",
-        "latestActivity": "Second Reading passed in New Brunswick Legislature",
-        "background": "Implements provincial property tax reform and assessment relief measures.",
-        "officialUrl": "https://www.legnb.ca/en/legislation/bills/61/3",
-    },
-    {
         "id": "PE-41",
         "jurisdiction": "PE",
         "jurisdictionName": "Prince Edward Island",
@@ -261,6 +248,41 @@ FALLBACK_BILLS = [
         "officialUrl": "https://www.assembly.nu.ca/bills-and-legislation",
     },
 ]
+
+# Full New Brunswick 61st Legislature, 3rd Session fallback (14 bills)
+NB_61_3_BILLS = [
+    ("14", "An Act Respecting Property Tax Reform Measures", 2, "2nd Reading"),
+    ("13", "An Act to Amend the Université de Moncton Act", 4, "3rd Reading"),
+    ("12", "An Act Respecting Young Persons, Digital Markets and Technology Use", 2, "2nd Reading"),
+    ("11", "Addiction Treatment Services Licensing Act", 2, "2nd Reading"),
+    ("10", "An Act to Amend the Education Act", 2, "2nd Reading"),
+    ("9", "An Act to Amend the Electricity Act", 2, "2nd Reading"),
+    ("8", "An Act to Amend the Gaming Control Act", 2, "2nd Reading"),
+    ("7", "An Act to Amend the Salvage Dealers Licensing Act", 2, "2nd Reading"),
+    ("6", "An Act to Amend the Employment Standards Act", 3, "Committee"),
+    ("5", "Non-disclosure Agreements Act", 4, "3rd Reading"),
+    ("4", "An Act to Amend the Provincial Court Act", 4, "3rd Reading"),
+    ("3", "An Act Respecting the Child, Youth, Senior and Mental Health Advocate", 4, "3rd Reading"),
+    ("2", "An Act to Amend the Opioid Damages and Health Care Costs Recovery Act", 4, "3rd Reading"),
+    ("1", "An Act to Perpetuate a Certain Ancient Right", 1, "1st Reading"),
+]
+
+FALLBACK_BILLS.extend([
+    {
+        "id": f"NB-{num}",
+        "jurisdiction": "NB",
+        "jurisdictionName": "New Brunswick",
+        "number": f"Bill {num}",
+        "title": title,
+        "sponsor": "Legislative Assembly of New Brunswick (61st Legislature, 3rd Session)",
+        "stageStep": step,
+        "stageLabel": label,
+        "latestActivity": f"{label} — 61st Legislature, 3rd Session",
+        "background": f"Active legislation before the Legislative Assembly of New Brunswick: {title}.",
+        "officialUrl": "https://www.legnb.ca/en/legislation/bills/61/3",
+    }
+    for num, title, step, label in NB_61_3_BILLS
+])
 
 # Full Alberta 31st Legislature, 2nd Session safety fallback
 ALBERTA_31_2_BILLS = [
@@ -382,11 +404,11 @@ def make_bill(jur_code, jur_name, num_clean, title, sponsor, status_text, url, s
     }
 
 
-def fetch_html_with_browser(browser, url, wait_ms=2500):
+def fetch_html_with_browser(browser, url, wait_ms=3500):
     context = browser.new_context(user_agent=HEADERS["User-Agent"])
     page = context.new_page()
     try:
-        page.goto(url, wait_until="networkidle", timeout=40000)
+        page.goto(url, wait_until="domcontentloaded", timeout=35000)
         page.wait_for_timeout(wait_ms)
         return page.content()
     finally:
@@ -629,7 +651,7 @@ def fetch_nl_bills():
 
 
 # ---------------------------------------------------------------------------
-# 6. NEW BRUNSWICK (Matches "14. An Act Respecting..." format on legnb.ca)
+# 6. NEW BRUNSWICK (Matches "14. An Act Respecting..." without length cap)
 # ---------------------------------------------------------------------------
 def fetch_nb_bills(browser=None):
     url = "https://www.legnb.ca/en/legislation/bills/61/3"
@@ -644,22 +666,19 @@ def fetch_nb_bills(browser=None):
     def parse_nb(raw_html):
         soup = BeautifulSoup(raw_html, "html.parser")
         found, seen = [], set()
-        # Matches links or list items like "14. An Act Respecting Property Tax Reform Measures"
-        pat = re.compile(r"^\s*(\d{1,3})\.\s+(.{5,220})$")
-        for a in soup.select("a[href*='/legislation/bills/61/3/'], li"):
-            text = " ".join(a.get_text(" ", strip=True).split())
+        pat = re.compile(r"^\s*(\d{1,3})\.\s+(.+)", re.S)
+        for el in soup.select("li, a[href*='/legislation/bills/']"):
+            text = " ".join(el.get_text(" ", strip=True).split())
             m = pat.match(text)
             if not m:
                 continue
             num = m.group(1)
-            # Strip trailing stage text if grabbed from <li>
-            title = re.split(r"\b1st Reading\b|\bAmended\b", m.group(2), maxsplit=1)[0].strip(" .")
+            title = re.split(r"\b1st Reading\b|\bAmended\b|\b2nd Reading\b", m.group(2), maxsplit=1)[0].strip(" .")
             if num in seen or len(title) < 5:
                 continue
             seen.add(num)
-            link = a if a.name == "a" and a.get("href") else a.find("a", href=True)
+            link = el if el.name == "a" and el.get("href") else el.find("a", href=True)
             full_url = urljoin(url, link["href"]) if link else url
-            parent_text = a.parent.get_text(" ", strip=True) if a.parent else text
             found.append(
                 make_bill(
                     "NB",
@@ -667,7 +686,7 @@ def fetch_nb_bills(browser=None):
                     num,
                     title,
                     "Legislative Assembly of New Brunswick (61st Legislature, 3rd Session)",
-                    parent_text,
+                    text,
                     full_url,
                 )
             )
@@ -676,7 +695,7 @@ def fetch_nb_bills(browser=None):
     bills = parse_nb(html) if html else []
     if len(bills) < 3 and browser:
         try:
-            js_html = fetch_html_with_browser(browser, url, wait_ms=3000)
+            js_html = fetch_html_with_browser(browser, url, wait_ms=3500)
             bills = parse_nb(js_html)
         except Exception as e:
             print(f"[NB] Playwright note: {e}")
@@ -684,21 +703,32 @@ def fetch_nb_bills(browser=None):
 
 
 # ---------------------------------------------------------------------------
-# 7. NORTHWEST TERRITORIES (Matches "67 - 20(1) Title" across paginated pages)
+# 7. NORTHWEST TERRITORIES (Playwright-assisted to bypass 403)
 # ---------------------------------------------------------------------------
-def fetch_nwt_bills():
+def fetch_nwt_bills(browser=None):
     base_url = "https://www.ntlegislativeassembly.ca/documents-proceedings/bills"
     bills, seen = [], set()
-    # Official format: "67 - 20(1) Appropriation Act (Infrastructure Expenditures) 2027-2028"
     nwt_re = re.compile(r"^\s*(\d{1,3})\s*[-–]\s*\d+\(\d+\)\s+(.+)$")
 
-    for page_num in range(15):
+    for page_num in range(10):
         url = base_url if page_num == 0 else f"{base_url}?page={page_num}"
-        res = requests.get(url, headers=HEADERS, timeout=25)
-        res.raise_for_status()
-        soup = BeautifulSoup(res.text, "html.parser")
-        page_found = 0
+        html = ""
+        if browser:
+            try:
+                html = fetch_html_with_browser(browser, url, wait_ms=2500)
+            except Exception as e:
+                print(f"[NT] Playwright note (page {page_num}): {e}")
+        if not html:
+            try:
+                res = requests.get(url, headers=HEADERS, timeout=25)
+                res.raise_for_status()
+                html = res.text
+            except Exception as e:
+                print(f"[NT] HTTP note (page {page_num}): {e}")
+                break
 
+        soup = BeautifulSoup(html, "html.parser")
+        page_found = 0
         for a in soup.select("a[href*='/documents-proceedings/bills/']"):
             text = " ".join(a.get_text(" ", strip=True).split())
             m = nwt_re.match(text)
@@ -729,14 +759,14 @@ def fetch_nwt_bills():
 
 
 # ---------------------------------------------------------------------------
-# 8. YUKON (Playwright-assisted to bypass 403 on yukonassembly.ca)
+# 8. YUKON (Playwright domcontentloaded to bypass 403 & avoid timeout)
 # ---------------------------------------------------------------------------
 def fetch_yukon_bills(browser=None):
     url = "https://yukonassembly.ca/house-business/progress-bills"
     html = ""
     if browser:
         try:
-            html = fetch_html_with_browser(browser, url, wait_ms=3000)
+            html = fetch_html_with_browser(browser, url, wait_ms=4000)
         except Exception as e:
             print(f"[YT] Playwright note: {e}")
     if not html:
@@ -792,14 +822,14 @@ def fetch_yukon_bills(browser=None):
 
 
 # ---------------------------------------------------------------------------
-# 9. PRINCE EDWARD ISLAND (Playwright-rendered Drupal bill list)
+# 9. PRINCE EDWARD ISLAND (Matches table rows + docs.assembly.pe.ca bill PDFs)
 # ---------------------------------------------------------------------------
 def fetch_pei_bills(browser):
     url = "https://www.assembly.pe.ca/legislative-business/house-records/bills"
     html = ""
     if browser:
         try:
-            html = fetch_html_with_browser(browser, url, wait_ms=4000)
+            html = fetch_html_with_browser(browser, url, wait_ms=4500)
         except Exception as e:
             print(f"[PE] Playwright note: {e}")
     if not html:
@@ -809,7 +839,6 @@ def fetch_pei_bills(browser):
 
     soup = BeautifulSoup(html, "html.parser")
     bills, seen = [], set()
-    bill_re = re.compile(r"(?:Bill\s*(?:No\.?\s*)?)?(\d+[A-Za-z]?)\.?\s*[:\-–,]?\s*(.+)", re.I)
 
     for row in soup.select("table tr"):
         cols = [" ".join(c.get_text(" ", strip=True).split()) for c in row.find_all(["td", "th"])]
@@ -829,17 +858,28 @@ def fetch_pei_bills(browser):
         bills.append(make_bill("PE", "Prince Edward Island", num, title, "Legislative Assembly of PEI", status, full_url))
 
     if len(bills) < 3:
-        for a in soup.select("a[href*='bill-'], a[href*='bills/']"):
-            text = " ".join(a.get_text(" ", strip=True).split())
-            m = bill_re.match(text)
-            if not m:
+        for a in soup.find_all("a", href=True):
+            href = a["href"]
+            fm = re.search(r"bill[-_](\d+[A-Za-z]?)\.pdf", href, re.I)
+            if not fm:
                 continue
-            num, title = m.group(1).upper(), m.group(2).strip()
-            if num in seen or len(title) < 5:
+            num = fm.group(1).upper()
+            title = " ".join(a.get_text(" ", strip=True).split())
+            if num in seen or len(title) < 4:
                 continue
             seen.add(num)
-            full_url = urljoin(url, a["href"])
-            bills.append(make_bill("PE", "Prince Edward Island", num, title, "Legislative Assembly of PEI", text, full_url))
+            full_url = urljoin(url, href)
+            bills.append(
+                make_bill(
+                    "PE",
+                    "Prince Edward Island",
+                    num,
+                    title,
+                    "Legislative Assembly of PEI (67th Assembly, 3rd Session)",
+                    "Active in PEI Legislative Assembly",
+                    full_url,
+                )
+            )
 
     return bills
 
@@ -975,7 +1015,6 @@ def main():
         ("SK", fetch_saskatchewan_bills),
         ("MB", fetch_manitoba_bills),
         ("NL", fetch_nl_bills),
-        ("NT", fetch_nwt_bills),
         ("NS", lambda: fetch_paginated_table_bills(
             "https://nslegislature.ca/legislative-business/bills-statutes/current-bills",
             "NS", "Nova Scotia", "Nova Scotia House of Assembly",
@@ -999,6 +1038,7 @@ def main():
 
         for code, pw_fetcher in [
             ("NB", lambda: fetch_nb_bills(browser)),
+            ("NT", lambda: fetch_nwt_bills(browser)),
             ("YT", lambda: fetch_yukon_bills(browser)),
             ("PE", lambda: fetch_pei_bills(browser)),
         ]:
