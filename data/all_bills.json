@@ -1,6 +1,6 @@
 {
-  "updated": "2026-11-23T13:07:38Z",
-  "count": 1044,
+  "updated": "2026-11-24T13:08:04Z",
+  "count": 1056,
   "bills": [
     {
       "id": "FED-S-1",
@@ -1452,9 +1452,9 @@
       "title": "Grocery and Housing Affordability Act",
       "sponsor": "45th Parliament, Session 1",
       "sector": "Housing & Municipal",
-      "stageStep": 4,
-      "stageLabel": "3rd Reading",
-      "latestActivity": "At third reading in the House of Commons",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "House of Commons bill awaiting first reading in the Senate",
       "background": "An Act respecting certain measures related to affordability and housing",
       "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-42"
     },
@@ -1813,13 +1813,13 @@
       "jurisdiction": "FED",
       "jurisdictionName": "Federal (Canada)",
       "number": "Bill C-226",
-      "title": "National Framework for Food Price Transparency Act",
+      "title": "An Act respecting the development of a national framework to improve food price transparency",
       "sponsor": "45th Parliament, Session 1",
       "sector": "Governance & General",
-      "stageStep": 3,
-      "stageLabel": "Committee",
-      "latestActivity": "At report stage in the House of Commons",
-      "background": "An Act to establish a national framework to improve food price transparency",
+      "stageStep": 4,
+      "stageLabel": "3rd Reading",
+      "latestActivity": "At third reading in the House of Commons",
+      "background": "An Act respecting the development of a national framework to improve food price transparency",
       "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-226"
     },
     {
@@ -2803,6 +2803,20 @@
       "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-296"
     },
     {
+      "id": "FED-C-297",
+      "jurisdiction": "FED",
+      "jurisdictionName": "Federal (Canada)",
+      "number": "Bill C-297",
+      "title": "An Act to amend the Competition Act (automated personalized pricing)",
+      "sponsor": "45th Parliament, Session 1",
+      "sector": "Governance & General",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "Outside the Order of Precedence",
+      "background": "An Act to amend the Competition Act (automated personalized pricing)",
+      "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-297"
+    },
+    {
       "id": "AB-1",
       "jurisdiction": "AB",
       "jurisdictionName": "Alberta",
@@ -3314,9 +3328,9 @@
       "title": "Miscellaneous Statutes Amendment Act, 2026",
       "sponsor": "Schow — 31st Legislature, 2nd Session",
       "sector": "Governance & General",
-      "stageStep": 2,
-      "stageLabel": "2nd Reading",
-      "latestActivity": "2nd Reading (Nov. 18, 2026)",
+      "stageStep": 4,
+      "stageLabel": "3rd Reading",
+      "latestActivity": "3rd Reading (Nov. 23, 2026)",
       "background": "Active legislation before the Schow — 31st Legislature, 2nd Session: Miscellaneous Statutes Amendment Act, 2026.",
       "officialUrl": "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature"
     },
@@ -3370,9 +3384,9 @@
       "title": "Financial Statutes Amendment Act, 2026 (No. 2)",
       "sponsor": "Nixon, JJ — 31st Legislature, 2nd Session",
       "sector": "Economy & Finance",
-      "stageStep": 1,
-      "stageLabel": "1st Reading",
-      "latestActivity": "1st Reading (Nov. 17, 2026)",
+      "stageStep": 2,
+      "stageLabel": "2nd Reading",
+      "latestActivity": "2nd Reading (Nov. 23, 2026)",
       "background": "Active legislation before the Nixon, JJ — 31st Legislature, 2nd Session: Financial Statutes Amendment Act, 2026 (No. 2).",
       "officialUrl": "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature"
     },
@@ -3402,6 +3416,34 @@
       "stageLabel": "1st Reading",
       "latestActivity": "1st Reading (Nov. 19, 2026)",
       "background": "Active legislation before the Dreeshen — 31st Legislature, 2nd Session: Transportation (Safe and Sensible Roads) Statutes Amendment Act, 2026.",
+      "officialUrl": "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature"
+    },
+    {
+      "id": "AB-44",
+      "jurisdiction": "AB",
+      "jurisdictionName": "Alberta",
+      "number": "Bill 44",
+      "title": "Justice, Public Safety and Information Statutes Amendment Act, 2026",
+      "sponsor": "Amery — 31st Legislature, 2nd Session",
+      "sector": "Justice & Public Safety",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "1st Reading (Nov. 23, 2026)",
+      "background": "Active legislation before the Amery — 31st Legislature, 2nd Session: Justice, Public Safety and Information Statutes Amendment Act, 2026.",
+      "officialUrl": "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature"
+    },
+    {
+      "id": "AB-45",
+      "jurisdiction": "AB",
+      "jurisdictionName": "Alberta",
+      "number": "Bill 45",
+      "title": "Natural Gas Infrastructure Act",
+      "sponsor": "Jean — 31st Legislature, 2nd Session",
+      "sector": "Energy & Environment",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "1st Reading (Nov. 23, 2026)",
+      "background": "Active legislation before the Jean — 31st Legislature, 2nd Session: Natural Gas Infrastructure Act.",
       "officialUrl": "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature"
     },
     {
@@ -3580,9 +3622,9 @@
       "title": "Alberta Personal Income Tax (Emergency Services Volunteer Tax Credits) Amendment Act, 2026",
       "sponsor": "Lunty — 31st Legislature, 2nd Session",
       "sector": "Justice & Public Safety",
-      "stageStep": 2,
-      "stageLabel": "2nd Reading",
-      "latestActivity": "2nd Reading (Nov. 16, 2026)",
+      "stageStep": 3,
+      "stageLabel": "Committee",
+      "latestActivity": "Committee (Nov. 23, 2026)",
       "background": "Active legislation before the Lunty — 31st Legislature, 2nd Session: Alberta Personal Income Tax (Emergency Services Volunteer Tax Credits) Amendment Act, 2026.",
       "officialUrl": "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature"
     },
@@ -3615,6 +3657,20 @@
       "officialUrl": "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature"
     },
     {
+      "id": "AB-216",
+      "jurisdiction": "AB",
+      "jurisdictionName": "Alberta",
+      "number": "Bill 216",
+      "title": "Property Statutes (Grocery Store Property Controls) Amendment Act, 2026",
+      "sponsor": "Chapman — 31st Legislature, 2nd Session",
+      "sector": "Economy & Finance",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "1st Reading (Nov. 23, 2026)",
+      "background": "Active legislation before the Chapman — 31st Legislature, 2nd Session: Property Statutes (Grocery Store Property Controls) Amendment Act, 2026.",
+      "officialUrl": "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature"
+    },
+    {
       "id": "AB-PR1",
       "jurisdiction": "AB",
       "jurisdictionName": "Alberta",
@@ -3641,6 +3697,34 @@
       "latestActivity": "Royal Assent (May 14, 2026)",
       "background": "Active legislation before the Sawyer — 31st Legislature, 2nd Session: Prairie Bible Institute Amendment Act, 2026.",
       "officialUrl": "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature"
+    },
+    {
+      "id": "ON-156",
+      "jurisdiction": "ON",
+      "jurisdictionName": "Ontario",
+      "number": "Bill 156",
+      "title": "Home and Community Care Awareness Week, 2026",
+      "sponsor": "Legislative Assembly of Ontario",
+      "sector": "Healthcare",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "Bill 156, Home and Community Care Awareness Week, 2026",
+      "background": "Active legislation before the Legislative Assembly of Ontario: Home and Community Care Awareness Week, 2026.",
+      "officialUrl": "https://www.ola.org/en/legislative-business/bills/parliament-44/session-1/bill-156"
+    },
+    {
+      "id": "ON-155",
+      "jurisdiction": "ON",
+      "jurisdictionName": "Ontario",
+      "number": "Bill 155",
+      "title": "Protect Ontario’s Northern and Rural Communities Act, 2026",
+      "sponsor": "Legislative Assembly of Ontario",
+      "sector": "Housing & Municipal",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "Bill 155, Protect Ontario’s Northern and Rural Communities Act, 2026",
+      "background": "Active legislation before the Legislative Assembly of Ontario: Protect Ontario’s Northern and Rural Communities Act, 2026.",
+      "officialUrl": "https://www.ola.org/en/legislative-business/bills/parliament-44/session-1/bill-155"
     },
     {
       "id": "ON-154",
@@ -6079,6 +6163,34 @@
       "officialUrl": "https://www.legassembly.sk.ca/media/obro0uvn/progress-of-bills.pdf"
     },
     {
+      "id": "SK-81",
+      "jurisdiction": "SK",
+      "jurisdictionName": "Saskatchewan",
+      "number": "Bill 81",
+      "title": "The Adoption Act, 2026",
+      "sponsor": "Legislative Assembly of Saskatchewan (30th Legislature, 3rd Session)",
+      "sector": "Governance & General",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "Active on Progress of Bills",
+      "background": "Active legislation before the Legislative Assembly of Saskatchewan (30th Legislature, 3rd Session): The Adoption Act, 2026.",
+      "officialUrl": "https://www.legassembly.sk.ca/media/obro0uvn/progress-of-bills.pdf"
+    },
+    {
+      "id": "SK-82",
+      "jurisdiction": "SK",
+      "jurisdictionName": "Saskatchewan",
+      "number": "Bill 82",
+      "title": "The Adoption Consequential",
+      "sponsor": "Legislative Assembly of Saskatchewan (30th Legislature, 3rd Session)",
+      "sector": "Governance & General",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "Active on Progress of Bills",
+      "background": "Active legislation before the Legislative Assembly of Saskatchewan (30th Legislature, 3rd Session): The Adoption Consequential.",
+      "officialUrl": "https://www.legassembly.sk.ca/media/obro0uvn/progress-of-bills.pdf"
+    },
+    {
       "id": "SK-631",
       "jurisdiction": "SK",
       "jurisdictionName": "Saskatchewan",
@@ -6359,6 +6471,20 @@
       "officialUrl": "https://web2.gov.mb.ca/bills/sess/b210e.php"
     },
     {
+      "id": "MB-211",
+      "jurisdiction": "MB",
+      "jurisdictionName": "Manitoba",
+      "number": "Bill 211",
+      "title": "The Retail Sales Tax Amendment Act (Farmer's Identification Number) PDF",
+      "sponsor": "Mrs. Hiebert",
+      "sector": "Economy & Finance",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "",
+      "background": "Active legislation before the Mrs. Hiebert: The Retail Sales Tax Amendment Act (Farmer's Identification Number) PDF.",
+      "officialUrl": "https://web2.gov.mb.ca/bills/sess/b211e.php"
+    },
+    {
       "id": "MB-213",
       "jurisdiction": "MB",
       "jurisdictionName": "Manitoba",
@@ -6385,6 +6511,48 @@
       "latestActivity": "",
       "background": "Active legislation before the Mrs. Cook: The Municipal Assessment Amendment Act PDF.",
       "officialUrl": "https://web2.gov.mb.ca/bills/sess/b214e.php"
+    },
+    {
+      "id": "MB-215",
+      "jurisdiction": "MB",
+      "jurisdictionName": "Manitoba",
+      "number": "Bill 215",
+      "title": "The Fiscal Responsibility and Taxpayer Protection Amendment Act PDF",
+      "sponsor": "Mrs. Stone",
+      "sector": "Economy & Finance",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "",
+      "background": "Active legislation before the Mrs. Stone: The Fiscal Responsibility and Taxpayer Protection Amendment Act PDF.",
+      "officialUrl": "https://web2.gov.mb.ca/bills/sess/b215e.php"
+    },
+    {
+      "id": "MB-216",
+      "jurisdiction": "MB",
+      "jurisdictionName": "Manitoba",
+      "number": "Bill 216",
+      "title": "The School Bus Seat Belt Safety Act PDF",
+      "sponsor": "Mr. Ewasko",
+      "sector": "Education & Childcare",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "",
+      "background": "Active legislation before the Mr. Ewasko: The School Bus Seat Belt Safety Act PDF.",
+      "officialUrl": "https://web2.gov.mb.ca/bills/sess/b216e.php"
+    },
+    {
+      "id": "MB-217",
+      "jurisdiction": "MB",
+      "jurisdictionName": "Manitoba",
+      "number": "Bill 217",
+      "title": "The Highway Traffic Amendment Act (Increased Penalties for Passing School Buses) PDF",
+      "sponsor": "Mr. Ewasko",
+      "sector": "Education & Childcare",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "",
+      "background": "Active legislation before the Mr. Ewasko: The Highway Traffic Amendment Act (Increased Penalties for Passing School Buses) PDF.",
+      "officialUrl": "https://web2.gov.mb.ca/bills/sess/b217e.php"
     },
     {
       "id": "NL-1",
