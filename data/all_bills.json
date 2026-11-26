@@ -1,6 +1,6 @@
 {
-  "updated": "2026-11-25T13:12:34Z",
-  "count": 1061,
+  "updated": "2026-11-26T13:10:20Z",
+  "count": 1069,
   "bills": [
     {
       "id": "FED-S-1",
@@ -600,7 +600,7 @@
       "sector": "Transportation & Infrastructure",
       "stageStep": 3,
       "stageLabel": "Committee",
-      "latestActivity": "At consideration in committee in the Senate",
+      "latestActivity": "At report stage in the Senate",
       "background": "An Act respecting the National Strategy to Combat Human Trafficking",
       "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/s-235"
     },
@@ -1412,7 +1412,7 @@
       "sector": "Economy & Finance",
       "stageStep": 3,
       "stageLabel": "Committee",
-      "latestActivity": "At consideration in committee in the House of Commons",
+      "latestActivity": "At report stage in the House of Commons",
       "background": "An Act respecting certain measures to strengthen the economy",
       "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-39"
     },
@@ -1718,9 +1718,9 @@
       "title": "International Anti-Corruption and Human Rights Act (Sergei Magnitsky Law No. 3)",
       "sponsor": "45th Parliament, Session 1",
       "sector": "Justice & Public Safety",
-      "stageStep": 4,
-      "stageLabel": "3rd Reading",
-      "latestActivity": "At third reading in the Senate",
+      "stageStep": 5,
+      "stageLabel": "Royal Assent",
+      "latestActivity": "Awaiting royal assent",
       "background": "An Act to amend the Department of Foreign Affairs, Trade and Development Act, the Justice for Victims of Corrupt Foreign Officials Act (Sergei Magnitsky Law) and the Special Economic Measures Act",
       "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-219"
     },
@@ -1746,9 +1746,9 @@
       "title": "An Act to amend the Corrections and Conditional Release Act (disclosure of information to victims)",
       "sponsor": "45th Parliament, Session 1",
       "sector": "Justice & Public Safety",
-      "stageStep": 4,
-      "stageLabel": "3rd Reading",
-      "latestActivity": "At third reading in the House of Commons",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "House of Commons bill awaiting first reading in the Senate",
       "background": "An Act to amend the Corrections and Conditional Release Act (disclosure of information to victims)",
       "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-221"
     },
@@ -2817,6 +2817,20 @@
       "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-297"
     },
     {
+      "id": "FED-C-298",
+      "jurisdiction": "FED",
+      "jurisdictionName": "Federal (Canada)",
+      "number": "Bill C-298",
+      "title": "Scoliosis Awareness Act",
+      "sponsor": "45th Parliament, Session 1",
+      "sector": "Governance & General",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "Outside the Order of Precedence",
+      "background": "An Act to establish Scoliosis Awareness Month and Canadian Scoliosis Screening Day",
+      "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-298"
+    },
+    {
       "id": "AB-1",
       "jurisdiction": "AB",
       "jurisdictionName": "Alberta",
@@ -3370,9 +3384,9 @@
       "title": "Electoral Divisions Act",
       "sponsor": "Amery — 31st Legislature, 2nd Session",
       "sector": "Governance & General",
-      "stageStep": 3,
-      "stageLabel": "Committee",
-      "latestActivity": "Committee (Nov. 24, 2026)",
+      "stageStep": 4,
+      "stageLabel": "3rd Reading",
+      "latestActivity": "3rd Reading (Nov. 25, 2026)",
       "background": "Active legislation before the Amery — 31st Legislature, 2nd Session: Electoral Divisions Act.",
       "officialUrl": "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature"
     },
@@ -3384,9 +3398,9 @@
       "title": "Financial Statutes Amendment Act, 2026 (No. 2)",
       "sponsor": "Nixon, JJ — 31st Legislature, 2nd Session",
       "sector": "Economy & Finance",
-      "stageStep": 3,
-      "stageLabel": "Committee",
-      "latestActivity": "Committee (Nov. 24, 2026)",
+      "stageStep": 4,
+      "stageLabel": "3rd Reading",
+      "latestActivity": "3rd Reading (Nov. 25, 2026)",
       "background": "Active legislation before the Nixon, JJ — 31st Legislature, 2nd Session: Financial Statutes Amendment Act, 2026 (No. 2).",
       "officialUrl": "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature"
     },
@@ -3398,9 +3412,9 @@
       "title": "Energy, Environment and Utilities Statutes Amendment Act, 2026",
       "sponsor": "Glubish — 31st Legislature, 2nd Session",
       "sector": "Energy & Environment",
-      "stageStep": 1,
-      "stageLabel": "1st Reading",
-      "latestActivity": "1st Reading (Nov. 18, 2026)",
+      "stageStep": 2,
+      "stageLabel": "2nd Reading",
+      "latestActivity": "2nd Reading (Nov. 25, 2026)",
       "background": "Active legislation before the Glubish — 31st Legislature, 2nd Session: Energy, Environment and Utilities Statutes Amendment Act, 2026.",
       "officialUrl": "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature"
     },
@@ -6205,6 +6219,20 @@
       "officialUrl": "https://www.legassembly.sk.ca/media/obro0uvn/progress-of-bills.pdf"
     },
     {
+      "id": "SK-84",
+      "jurisdiction": "SK",
+      "jurisdictionName": "Saskatchewan",
+      "number": "Bill 84",
+      "title": "The Protection of Economic",
+      "sponsor": "Legislative Assembly of Saskatchewan (30th Legislature, 3rd Session)",
+      "sector": "Economy & Finance",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "Active on Progress of Bills",
+      "background": "Active legislation before the Legislative Assembly of Saskatchewan (30th Legislature, 3rd Session): The Protection of Economic.",
+      "officialUrl": "https://www.legassembly.sk.ca/media/obro0uvn/progress-of-bills.pdf"
+    },
+    {
       "id": "SK-631",
       "jurisdiction": "SK",
       "jurisdictionName": "Saskatchewan",
@@ -6387,6 +6415,20 @@
       "officialUrl": "https://web2.gov.mb.ca/bills/sess/b004e.php"
     },
     {
+      "id": "MB-6",
+      "jurisdiction": "MB",
+      "jurisdictionName": "Manitoba",
+      "number": "Bill 6",
+      "title": "The Child Sexual Exploitation and Human Trafficking Amendment and Domestic Violence and Stalking Amendment Act PDF",
+      "sponsor": "Hon. Mr. Wiebe Minister of Justice",
+      "sector": "Justice & Public Safety",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "",
+      "background": "Active legislation before the Hon. Mr. Wiebe Minister of Justice: The Child Sexual Exploitation and Human Trafficking Amendment and Domestic Violence and Stalking Amendment Act PDF.",
+      "officialUrl": "https://web2.gov.mb.ca/bills/sess/b006e.php"
+    },
+    {
       "id": "MB-200",
       "jurisdiction": "MB",
       "jurisdictionName": "Manitoba",
@@ -6469,6 +6511,20 @@
       "latestActivity": "",
       "background": "Active legislation before the Mrs. Cook: The Pharmaceutical Amendment Act PDF.",
       "officialUrl": "https://web2.gov.mb.ca/bills/sess/b208e.php"
+    },
+    {
+      "id": "MB-209",
+      "jurisdiction": "MB",
+      "jurisdictionName": "Manitoba",
+      "number": "Bill 209",
+      "title": "The Buildings Amendment Act (Radon Notice) PDF",
+      "sponsor": "Mr. King",
+      "sector": "Governance & General",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "",
+      "background": "Active legislation before the Mr. King: The Buildings Amendment Act (Radon Notice) PDF.",
+      "officialUrl": "https://web2.gov.mb.ca/bills/sess/b209e.php"
     },
     {
       "id": "MB-210",
@@ -6623,6 +6679,62 @@
       "latestActivity": "",
       "background": "Active legislation before the Mrs. Cook: The Health System Governance and Accountability Amendment Act (Reporting When Timely Care Not Available) PDF.",
       "officialUrl": "https://web2.gov.mb.ca/bills/sess/b220e.php"
+    },
+    {
+      "id": "MB-221",
+      "jurisdiction": "MB",
+      "jurisdictionName": "Manitoba",
+      "number": "Bill 221",
+      "title": "The Wildlife Amendment Act PDF",
+      "sponsor": "Mr. Wowchuk",
+      "sector": "Energy & Environment",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "",
+      "background": "Active legislation before the Mr. Wowchuk: The Wildlife Amendment Act PDF.",
+      "officialUrl": "https://web2.gov.mb.ca/bills/sess/b221e.php"
+    },
+    {
+      "id": "MB-222",
+      "jurisdiction": "MB",
+      "jurisdictionName": "Manitoba",
+      "number": "Bill 222",
+      "title": "The Municipal Councils and School Boards Elections Amendment Act PDF",
+      "sponsor": "Mrs. Stone",
+      "sector": "Education & Childcare",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "",
+      "background": "Active legislation before the Mrs. Stone: The Municipal Councils and School Boards Elections Amendment Act PDF.",
+      "officialUrl": "https://web2.gov.mb.ca/bills/sess/b222e.php"
+    },
+    {
+      "id": "MB-223",
+      "jurisdiction": "MB",
+      "jurisdictionName": "Manitoba",
+      "number": "Bill 223",
+      "title": "The Residency Requirements for Elections Act (Various Acts Amended) PDF",
+      "sponsor": "Mr. Balcaen",
+      "sector": "Economy & Finance",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "",
+      "background": "Active legislation before the Mr. Balcaen: The Residency Requirements for Elections Act (Various Acts Amended) PDF.",
+      "officialUrl": "https://web2.gov.mb.ca/bills/sess/b223e.php"
+    },
+    {
+      "id": "MB-224",
+      "jurisdiction": "MB",
+      "jurisdictionName": "Manitoba",
+      "number": "Bill 224",
+      "title": "The Catholic Schools Week Act (Commemoration of Days, Weeks and Months Act Amended) PDF",
+      "sponsor": "Mrs. Stone",
+      "sector": "Education & Childcare",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "",
+      "background": "Active legislation before the Mrs. Stone: The Catholic Schools Week Act (Commemoration of Days, Weeks and Months Act Amended) PDF.",
+      "officialUrl": "https://web2.gov.mb.ca/bills/sess/b224e.php"
     },
     {
       "id": "NL-1",
