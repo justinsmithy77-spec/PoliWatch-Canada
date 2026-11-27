@@ -1,6 +1,6 @@
 {
-  "updated": "2026-11-26T13:10:20Z",
-  "count": 1069,
+  "updated": "2026-11-27T13:06:03Z",
+  "count": 1075,
   "bills": [
     {
       "id": "FED-S-1",
@@ -108,9 +108,9 @@
       "title": "Combatting Financial Crimes and Drug Trafficking Act",
       "sponsor": "45th Parliament, Session 1",
       "sector": "Healthcare",
-      "stageStep": 2,
-      "stageLabel": "2nd Reading",
-      "latestActivity": "At second reading in the Senate",
+      "stageStep": 3,
+      "stageLabel": "Committee",
+      "latestActivity": "At consideration in committee in the Senate",
       "background": "An Act respecting certain measures relating to proceeds of crime, terrorist financing, sanctions evasion and the detection of non-mailable matter transmitted by post",
       "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/s-8"
     },
@@ -794,9 +794,9 @@
       "title": "Christian Heritage Month Act",
       "sponsor": "45th Parliament, Session 1",
       "sector": "Governance & General",
-      "stageStep": 2,
-      "stageLabel": "2nd Reading",
-      "latestActivity": "At second reading in the Senate",
+      "stageStep": 3,
+      "stageLabel": "Committee",
+      "latestActivity": "At consideration in committee in the Senate",
       "background": "An Act respecting Christian Heritage Month",
       "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/s-249"
     },
@@ -1174,7 +1174,7 @@
       "sector": "Justice & Public Safety",
       "stageStep": 3,
       "stageLabel": "Committee",
-      "latestActivity": "At consideration in committee in the Senate",
+      "latestActivity": "At report stage in the Senate",
       "background": "An Act respecting lawful access",
       "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-22"
     },
@@ -1256,9 +1256,9 @@
       "title": "Canadian Space Launch Act",
       "sponsor": "45th Parliament, Session 1",
       "sector": "Governance & General",
-      "stageStep": 2,
-      "stageLabel": "2nd Reading",
-      "latestActivity": "At second reading in the House of Commons",
+      "stageStep": 3,
+      "stageLabel": "Committee",
+      "latestActivity": "At consideration in committee in the House of Commons",
       "background": "An Act to amend the Aeronautics Act and other Acts",
       "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-28"
     },
@@ -1457,6 +1457,20 @@
       "latestActivity": "At second reading in the Senate",
       "background": "An Act respecting certain measures related to affordability and housing",
       "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-42"
+    },
+    {
+      "id": "FED-C-43",
+      "jurisdiction": "FED",
+      "jurisdictionName": "Federal (Canada)",
+      "number": "Bill C-43",
+      "title": "Budget 2026 Implementation Act, No. 1",
+      "sponsor": "45th Parliament, Session 1",
+      "sector": "Economy & Finance",
+      "stageStep": 2,
+      "stageLabel": "2nd Reading",
+      "latestActivity": "At second reading in the House of Commons",
+      "background": "An Act to implement certain provisions of the budget tabled in Parliament on November 5, 2026",
+      "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-43"
     },
     {
       "id": "FED-C-201",
@@ -1746,9 +1760,9 @@
       "title": "An Act to amend the Corrections and Conditional Release Act (disclosure of information to victims)",
       "sponsor": "45th Parliament, Session 1",
       "sector": "Justice & Public Safety",
-      "stageStep": 1,
-      "stageLabel": "1st Reading",
-      "latestActivity": "House of Commons bill awaiting first reading in the Senate",
+      "stageStep": 2,
+      "stageLabel": "2nd Reading",
+      "latestActivity": "At second reading in the Senate",
       "background": "An Act to amend the Corrections and Conditional Release Act (disclosure of information to victims)",
       "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-221"
     },
@@ -3713,6 +3727,20 @@
       "officialUrl": "https://www.assembly.ab.ca/assembly-business/bills/bills-by-legislature"
     },
     {
+      "id": "ON-157",
+      "jurisdiction": "ON",
+      "jurisdictionName": "Ontario",
+      "number": "Bill 157",
+      "title": "Safer Drinking Water for a Healthier Future Act, 2026",
+      "sponsor": "Legislative Assembly of Ontario",
+      "sector": "Healthcare",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "Bill 157, Safer Drinking Water for a Healthier Future Act, 2026",
+      "background": "Active legislation before the Legislative Assembly of Ontario: Safer Drinking Water for a Healthier Future Act, 2026.",
+      "officialUrl": "https://www.ola.org/en/legislative-business/bills/parliament-44/session-1/bill-157"
+    },
+    {
       "id": "ON-156",
       "jurisdiction": "ON",
       "jurisdictionName": "Ontario",
@@ -5635,13 +5663,13 @@
       "jurisdiction": "ON",
       "jurisdictionName": "Ontario",
       "number": "Bill 19",
-      "title": "Patient-to-Nurse Ratios for Hospitals Act, 2025",
+      "title": "Patient-to-Nurse Ratios for Hospitals Act, 2026",
       "sponsor": "Legislative Assembly of Ontario",
       "sector": "Healthcare",
       "stageStep": 1,
       "stageLabel": "1st Reading",
-      "latestActivity": "Bill 19, Patient-to-Nurse Ratios for Hospitals Act, 2025",
-      "background": "Active legislation before the Legislative Assembly of Ontario: Patient-to-Nurse Ratios for Hospitals Act, 2025.",
+      "latestActivity": "Bill 19, Patient-to-Nurse Ratios for Hospitals Act, 2026",
+      "background": "Active legislation before the Legislative Assembly of Ontario: Patient-to-Nurse Ratios for Hospitals Act, 2026.",
       "officialUrl": "https://www.ola.org/en/legislative-business/bills/parliament-44/session-1/bill-19"
     },
     {
@@ -6429,6 +6457,20 @@
       "officialUrl": "https://web2.gov.mb.ca/bills/sess/b006e.php"
     },
     {
+      "id": "MB-7",
+      "jurisdiction": "MB",
+      "jurisdictionName": "Manitoba",
+      "number": "Bill 7",
+      "title": "The Workers Compensation Amendment Act PDF",
+      "sponsor": "Hon. Minister Marcelino Minister of Labour and Immigration",
+      "sector": "Labour & Social Services",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "",
+      "background": "Active legislation before the Hon. Minister Marcelino Minister of Labour and Immigration: The Workers Compensation Amendment Act PDF.",
+      "officialUrl": "https://web2.gov.mb.ca/bills/sess/b007e.php"
+    },
+    {
       "id": "MB-200",
       "jurisdiction": "MB",
       "jurisdictionName": "Manitoba",
@@ -6735,6 +6777,48 @@
       "latestActivity": "",
       "background": "Active legislation before the Mrs. Stone: The Catholic Schools Week Act (Commemoration of Days, Weeks and Months Act Amended) PDF.",
       "officialUrl": "https://web2.gov.mb.ca/bills/sess/b224e.php"
+    },
+    {
+      "id": "MB-226",
+      "jurisdiction": "MB",
+      "jurisdictionName": "Manitoba",
+      "number": "Bill 226",
+      "title": "The Celebration of Philippine Independence Day Act (Commemoration of Days, Weeks and Months Act Amended) PDF",
+      "sponsor": "MLA Dela Cruz",
+      "sector": "Governance & General",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "",
+      "background": "Active legislation before the MLA Dela Cruz: The Celebration of Philippine Independence Day Act (Commemoration of Days, Weeks and Months Act Amended) PDF.",
+      "officialUrl": "https://web2.gov.mb.ca/bills/sess/b226e.php"
+    },
+    {
+      "id": "MB-227",
+      "jurisdiction": "MB",
+      "jurisdictionName": "Manitoba",
+      "number": "Bill 227",
+      "title": "The Climate Action Month Act (Commemoration of Days, Weeks and Months Act Amended) PDF",
+      "sponsor": "MLA Loiselle",
+      "sector": "Energy & Environment",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "",
+      "background": "Active legislation before the MLA Loiselle: The Climate Action Month Act (Commemoration of Days, Weeks and Months Act Amended) PDF.",
+      "officialUrl": "https://web2.gov.mb.ca/bills/sess/b227e.php"
+    },
+    {
+      "id": "MB-228",
+      "jurisdiction": "MB",
+      "jurisdictionName": "Manitoba",
+      "number": "Bill 228",
+      "title": "The Moose Hide Campaign Day Act (Commemoration of Days, Weeks and Months Act Amended) PDF",
+      "sponsor": "Mr. Blashko",
+      "sector": "Governance & General",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "",
+      "background": "Active legislation before the Mr. Blashko: The Moose Hide Campaign Day Act (Commemoration of Days, Weeks and Months Act Amended) PDF.",
+      "officialUrl": "https://web2.gov.mb.ca/bills/sess/b228e.php"
     },
     {
       "id": "NL-1",
