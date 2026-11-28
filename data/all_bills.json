@@ -1,6 +1,6 @@
 {
-  "updated": "2026-11-27T13:06:03Z",
-  "count": 1075,
+  "updated": "2026-11-28T12:53:39Z",
+  "count": 1076,
   "bills": [
     {
       "id": "FED-S-1",
@@ -754,7 +754,7 @@
       "sector": "Governance & General",
       "stageStep": 3,
       "stageLabel": "Committee",
-      "latestActivity": "At consideration in committee in the House of Commons",
+      "latestActivity": "At report stage in the House of Commons",
       "background": "An Act respecting the recognition of wartime service",
       "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/s-246"
     },
@@ -2843,6 +2843,20 @@
       "latestActivity": "Outside the Order of Precedence",
       "background": "An Act to establish Scoliosis Awareness Month and Canadian Scoliosis Screening Day",
       "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-298"
+    },
+    {
+      "id": "FED-C-299",
+      "jurisdiction": "FED",
+      "jurisdictionName": "Federal (Canada)",
+      "number": "Bill C-299",
+      "title": "An Act to amend the Canada Student Financial Assistance Act",
+      "sponsor": "45th Parliament, Session 1",
+      "sector": "Education & Childcare",
+      "stageStep": 1,
+      "stageLabel": "1st Reading",
+      "latestActivity": "Outside the Order of Precedence",
+      "background": "An Act to amend the Canada Student Financial Assistance Act",
+      "officialUrl": "https://www.parl.ca/legisinfo/en/bill/45-1/c-299"
     },
     {
       "id": "AB-1",
